@@ -3,11 +3,11 @@ package com.developershub.backend.service;
 import com.developershub.backend.entity.Opportunity;
 import com.developershub.backend.repository.OpportunityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-
-import java.util.List;
 
 @Service
 public class OpportunityService {
@@ -19,8 +19,8 @@ public class OpportunityService {
         this.repository = repository;
     }
 
-    public List<Opportunity> findAll() {
-        return repository.findAll();
+    public Page<Opportunity> findAll(Pageable pageable) {
+        return repository.findAll(pageable);
     }
 
     public Opportunity findById(Long id) {
