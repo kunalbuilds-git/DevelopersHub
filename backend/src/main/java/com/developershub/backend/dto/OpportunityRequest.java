@@ -1,60 +1,30 @@
-package com.developershub.backend.entity;
+package com.developershub.backend.dto;
 
-import jakarta.persistence.*;
+import com.developershub.backend.entity.Opportunity;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Entity
-@Table(name = "opportunity")
-public class Opportunity {
+public class OpportunityRequest {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false, length = 255)
     private String title;
-
-    @Column(nullable = false, length = 255)
     private String organization;
-
-    @Column(nullable = false, length = 50)
     private String type;
-
-    @Column(columnDefinition = "TEXT")
     private String description;
-
-    @Column(length = 500)
     private String url;
-
     private LocalDateTime deadline;
+    private Set<String> tags = new HashSet<>();
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @ManyToMany
-    @JoinTable(
-        name = "opportunity_tag",
-        joinColumns = @JoinColumn(name = "opportunity_id"),
-        inverseJoinColumns = @JoinColumn(name = "tag_id")
-    )
-    private Set<Tag> tags = new HashSet<>();
-
-    public Opportunity() {
-    }
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
+    public Opportunity toOpportunity() {
+        Opportunity opportunity = new Opportunity();
+        opportunity.setTitle(title);
+        opportunity.setOrganization(organization);
+        opportunity.setType(type);
+        opportunity.setDescription(description);
+        opportunity.setUrl(url);
+        opportunity.setDeadline(deadline);
+        return opportunity;
     }
 
     public String getTitle() {
@@ -105,15 +75,11 @@ public class Opportunity {
         this.deadline = deadline;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public Set<Tag> getTags() {
+    public Set<String> getTags() {
         return tags;
     }
 
-    public void setTags(Set<Tag> tags) {
+    public void setTags(Set<String> tags) {
         this.tags = tags;
     }
 }
