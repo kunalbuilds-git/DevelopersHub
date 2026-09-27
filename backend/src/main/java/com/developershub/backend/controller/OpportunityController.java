@@ -1,5 +1,6 @@
 package com.developershub.backend.controller;
 
+import com.developershub.backend.dto.OpportunityRequest;
 import com.developershub.backend.entity.Opportunity;
 import com.developershub.backend.service.OpportunityService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +23,12 @@ public class OpportunityController {
 
     @GetMapping
     public Page<Opportunity> getAll(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String tag,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return service.findAll(pageable);
+        return service.findAll(type, tag, pageable);
     }
 
     @GetMapping("/{id}")
@@ -35,13 +38,13 @@ public class OpportunityController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Opportunity create(@RequestBody Opportunity opportunity) {
-        return service.create(opportunity);
+    public Opportunity create(@RequestBody OpportunityRequest request) {
+        return service.create(request.toOpportunity(), request.getTags());
     }
 
     @PutMapping("/{id}")
-    public Opportunity update(@PathVariable Long id, @RequestBody Opportunity opportunity) {
-        return service.update(id, opportunity);
+    public Opportunity update(@PathVariable Long id, @RequestBody OpportunityRequest request) {
+        return service.update(id, request.toOpportunity(), request.getTags());
     }
 
     @DeleteMapping("/{id}")
