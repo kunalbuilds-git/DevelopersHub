@@ -22,4 +22,17 @@ public class OpportunitySpecifications {
             return cb.equal(tagJoin.get("name"), tagName);
         };
     }
+
+    public static Specification<Opportunity> hasKeyword(String keyword) {
+        return (root, query, cb) -> {
+            if (keyword == null || keyword.isBlank()) {
+                return null;
+            }
+            String pattern = "%" + keyword.toLowerCase() + "%";
+            return cb.or(
+                cb.like(cb.lower(root.get("title")), pattern),
+                cb.like(cb.lower(root.get("organization")), pattern)
+            );
+        };
+    }
 }
