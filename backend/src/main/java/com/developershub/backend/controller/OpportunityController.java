@@ -25,10 +25,11 @@ public class OpportunityController {
     public Page<Opportunity> getAll(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String tag,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return service.findAll(type, tag, pageable);
+        return service.findAll(type, tag, keyword, pageable);
     }
 
     @GetMapping("/{id}")

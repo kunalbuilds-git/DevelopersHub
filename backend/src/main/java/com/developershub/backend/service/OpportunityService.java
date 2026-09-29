@@ -17,6 +17,7 @@ import java.util.Set;
 
 import static com.developershub.backend.specification.OpportunitySpecifications.hasType;
 import static com.developershub.backend.specification.OpportunitySpecifications.hasTag;
+import static com.developershub.backend.specification.OpportunitySpecifications.hasKeyword;
 
 @Service
 public class OpportunityService {
@@ -30,10 +31,11 @@ public class OpportunityService {
         this.tagRepository = tagRepository;
     }
 
-    public Page<Opportunity> findAll(String type, String tag, Pageable pageable) {
+    public Page<Opportunity> findAll(String type, String tag, String keyword, Pageable pageable) {
         Specification<Opportunity> spec = Specification
                 .where(hasType(type))
-                .and(hasTag(tag));
+                .and(hasTag(tag))
+                .and(hasKeyword(keyword));
         return repository.findAll(spec, pageable);
     }
 
