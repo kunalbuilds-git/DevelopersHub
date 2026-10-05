@@ -1,120 +1,222 @@
-# DevelopersHub
+<div align="center">
 
-> A developer-focused platform for discovering resources, projects, tools, and opportunities — all in one place.
+  <h1>🚀 DevelopersHub</h1>
+  <p><b>A unified backend platform for student developers to discover hackathons, internships, GSoC programs, and open-source opportunities.</b></p>
 
-![Java](https://img.shields.io/badge/Java-25-ED8B00?logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?logo=springboot&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
-![Flyway](https://img.shields.io/badge/Flyway-12-CC0200?logo=flyway&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-in%20development-yellow)
+  <p>
+    <a href="https://github.com/kunalbuilds-git/DevelopersHub">
+      <img src="https://img.shields.io/badge/Java-25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 25" />
+    </a>
+    <a href="https://github.com/kunalbuilds-git/DevelopersHub">
+      <img src="https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot" />
+    </a>
+    <a href="https://github.com/kunalbuilds-git/DevelopersHub">
+      <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+    </a>
+    <a href="https://github.com/kunalbuilds-git/DevelopersHub">
+      <img src="https://img.shields.io/badge/Flyway-12-CC0200?style=for-the-badge&logo=flyway&logoColor=white" alt="Flyway" />
+    </a>
+    <a href="https://github.com/kunalbuilds-git/DevelopersHub">
+      <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+    </a>
+  </p>
+
+  <p>
+    <a href="https://github.com/kunalbuilds-git/DevelopersHub/blob/main/LICENSE">
+      <img src="https://img.shields.io/github/license/kunalbuilds-git/DevelopersHub?style=flat-square&color=2ea44f" alt="License" />
+    </a>
+    <img src="https://img.shields.io/badge/status-in%20development-yellow?style=flat-square" alt="Status" />
+    <a href="https://github.com/kunalbuilds-git/DevelopersHub/milestone/1">
+      <img src="https://img.shields.io/badge/milestone-v0.1-blue?style=flat-square" alt="Milestone" />
+    </a>
+  </p>
+
+  <sub>Hand-crafted with JPA Specifications • Built feature-by-feature for deep learning</sub>
+
+</div>
+
+---
+
+<p align="center">
+  <a href="#about">About</a> •
+  <a href="#features">Features</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#tech-stack">Tech Stack</a> •
+  <a href="#api-overview">API Overview</a> •
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#project-structure">Structure</a>
+</p>
+
+---
 
 ## About
 
-Student developers juggle hackathons, internships, GSoC-style programs, and beginner-friendly open-source issues scattered across a dozen different sites. DevelopersHub brings them into one searchable, filterable place — built both as a real tool and as a hands-on backend learning project, one feature at a time.
+Student developers juggle hackathons, internships, GSoC-style programs, and beginner-friendly open-source issues scattered across a dozen different platforms. **DevelopersHub** brings them into one searchable, filterable hub — built both as a real tool and as a hands-on backend engineering project, one deliberate feature at a time.
+
+---
 
 ## Features
 
-### Built
-- Full CRUD for opportunities (create, read, update, delete) with validation and correct HTTP status codes
-- Paginated listing with total count and page metadata
-- Many-to-many tagging (opportunities ↔ tags) through a normalized join table
-- Combined filtering by type and tag, built with Spring Data JPA Specifications
-- Case-insensitive keyword search across title and organization
-- Versioned schema migrations with Flyway
-- Dockerized PostgreSQL for local development
+### ✅ Currently Built
+* **Full CRUD Lifecycle:** Create, read, update, and delete opportunities with strict payload validation and standard REST status codes.
+* **Paginated Listings:** Dynamic page allocation featuring page index, size, total elements, and page metadata.
+* **Normalized Tagging System:** Many-to-many relationship mapping (`opportunities` ↔ `tags`) via join tables with auto-creation for missing tags.
+* **Composable Filtering:** Combined search across `type` and `tag` using Spring Data JPA Specifications instead of bloated repository queries.
+* **Case-Insensitive Search:** Wildcard keyword search across titles and organization names.
+* **Database Migrations:** Versioned, repeatable PostgreSQL schema migrations powered by Flyway.
+* **Isolated Dev Setup:** Instant database setup via Docker Compose.
 
-### In progress / planned
-- User registration and login with JWT
-- Role-based access control (admin vs. regular user)
-- Bookmarking / saved opportunities, sorted by deadline
-- Automated tests running in CI on every pull request
-- Frontend (web UI)
-- Deployment
+### 🚧 In Progress & Planned
+* [ ] User Registration & Authentication (JWT-based)
+* [ ] Role-Based Access Control (RBAC: Admin vs. User)
+* [ ] Saved & Bookmarked Opportunities (sorted by deadline proximity)
+* [ ] Continuous Integration pipeline with automated test suites
+* [ ] React / Web Frontend
+* [ ] Production Cloud Deployment
 
-Live progress: [v0.1 milestone](https://github.com/kunalbuilds-git/DevelopersHub/milestones)
+📌 Track real-time progress on the [v0.1 Milestone Board](https://github.com/kunalbuilds-git/DevelopersHub/milestones).
+
+---
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    Client -->|REST / JSON| Controller
-    Controller --> Service
-    Service --> Repository
-    Service --> Spec["Specifications: type / tag / keyword"]
-    Repository --> DB[(PostgreSQL)]
-    Flyway["Flyway Migrations"] --> DB
+    Client["Client / Web"] -->|REST / JSON| Controller["REST Controller"]
+    Controller --> Service["Service Layer"]
+    Service --> Repository["JPA Repository"]
+    Service --> Spec["JPA Specifications\n(type / tag / keyword)"]
+    Repository --> DB[(PostgreSQL 16)]
+    Flyway["Flyway Engine"] -->|Schema Migrations| DB
 ```
 
-A layered Spring Boot backend — **Controller → Service → Repository** — with dynamic filtering handled through composable JPA Specifications instead of one query method per filter combination.
+Designed following a clean multi-layered backend pattern (**Controller → Service → Repository**). Dynamic queries are composed at runtime using JPA Criteria Builders to maintain performance without cluttering repository interfaces.
+
+---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Language | Java 25 |
-| Framework | Spring Boot 4.1.1 |
-| Data access | Spring Data JPA (Hibernate) |
-| Database | PostgreSQL 16 |
-| Migrations | Flyway |
-| Build tool | Maven |
-| Local dev | Docker Compose |
+| Component | Technology | Version | Description |
+|---|---|---|---|
+| **Language** | Java | 25 | Core platform language |
+| **Framework** | Spring Boot | 4.1.1 | REST API framework & DI container |
+| **Data Access** | Spring Data JPA | - | Object-Relational Mapping (Hibernate) |
+| **Database** | PostgreSQL | 16 | Production-grade relational database |
+| **Migrations** | Flyway | 12 | Database version control |
+| **Build System** | Maven | 3.9+ | Dependency & build management |
+| **Containerization** | Docker Compose | - | Local database orchestration |
+
+---
 
 ## API Overview
 
-Base path: `/api/opportunities`
+**Base Path:** `/api/opportunities`
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Paginated list, filterable by `type`, `tag`, `keyword` |
-| `GET` | `/{id}` | Fetch a single opportunity |
-| `POST` | `/` | Create an opportunity (new tags auto-created) |
-| `PUT` | `/{id}` | Update an opportunity |
-| `DELETE` | `/{id}` | Delete an opportunity |
+| Method | Endpoint | Query Parameters | Description |
+|---|---|---|---|
+| `GET` | `/` | `type`, `tag`, `keyword`, `page`, `size` | Fetch paginated & filtered opportunities |
+| `GET` | `/{id}` | - | Fetch a single opportunity by ID |
+| `POST` | `/` | - | Create a new opportunity (auto-links tags) |
+| `PUT` | `/{id}` | - | Update an existing opportunity |
+| `DELETE` | `/{id}` | - | Remove an opportunity by ID |
 
-Example:
-```
+### 💡 Example Query
+
+```http
 GET /api/opportunities?type=program&tag=beginner-friendly&keyword=google&page=0&size=10
 ```
 
+<details>
+<summary><b>🔍 Click to view Sample JSON Response</b></summary>
+
+```json
+{
+  "content": [
+    {
+      "id": 101,
+      "title": "Google Summer of Code 2026",
+      "organization": "Google",
+      "type": "program",
+      "url": "https://summerofcode.withgoogle.com",
+      "tags": ["beginner-friendly", "open-source", "java"]
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 10
+  },
+  "totalElements": 1,
+  "totalPages": 1
+}
+```
+</details>
+
+---
+
 ## Getting Started
 
-**Prerequisites:** Java 25, Docker, Maven (or the included `mvnw` wrapper)
+### Prerequisites
+* **Java 25** installed locally (`java -version`)
+* **Docker & Docker Compose** installed
+* **Maven** (or use the provided `./mvnw` wrapper)
 
-```bash
-# 1. Start PostgreSQL
-docker compose up -d
+### Setup & Run
 
-# 2. Run the backend
-cd backend
-./mvnw spring-boot:run
-```
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/kunalbuilds-git/DevelopersHub.git
+   cd DevelopersHub
+   ```
 
-The API is then available at `http://localhost:8080/api/opportunities`.
+2. **Start the PostgreSQL Container**
+   ```bash
+   docker compose up -d
+   ```
+
+3. **Launch the Backend Service**
+   ```bash
+   cd backend
+   ./mvnw spring-boot:run
+   ```
+
+4. **Verify Application Status**
+   Access the base API at: `http://localhost:8080/api/opportunities`
+
+---
 
 ## Project Structure
 
 ```
 backend/
-├── src/main/java/com/developershub/backend/
-│   ├── controller/       # REST endpoints
-│   ├── service/          # Business logic
-│   ├── repository/       # Spring Data JPA repositories
-│   ├── specification/    # Composable query filters
-│   ├── entity/           # JPA entities
-│   └── dto/              # API request/response shapes
-└── src/main/resources/db/migration/   # Flyway migrations
+├── src/
+│   ├── main/
+│   │   ├── java/com/developershub/backend/
+│   │   │   ├── controller/      # REST API Controllers
+│   │   │   ├── service/         # Business Logic & Orchestration
+│   │   │   ├── repository/      # Spring Data JPA Repositories
+│   │   │   ├── specification/   # Composable JPA Query Filters
+│   │   │   ├── entity/          # JPA Database Entities
+│   │   │   └── dto/             # Request & Response Models
+│   │   └── resources/
+│   │       ├── db/migration/    # Flyway Migration SQL Scripts
+│   │       └── application.yml  # Spring Application Configuration
+└── docker-compose.yml           # Database container declaration
 ```
 
-## Roadmap
+---
 
-Built as part of a publicly-documented, year-long software engineering roadmap (#100DaysOfCode). Every feature here is hand-built rather than AI-generated, as a deliberate choice to build real understanding alongside the project.
+## Roadmap & Principles
+
+Built as part of a publicly tracked software engineering journey (**#100DaysOfCode**). Every line of code, migration, and architecture decision is crafted by hand to foster genuine software engineering understanding rather than using AI boilerplate generation.
+
+---
 
 ## Contributing
 
-Currently a solo project. Work is tracked against the `v0.1` milestone via GitHub Issues. Suggestions are welcome through Issues.
+Currently developed as a solo project by [@kunalbuilds-git](https://github.com/kunalbuilds-git). Work is tracked against milestones via GitHub Issues. Suggestions and bug reports are welcome via [GitHub Issues](https://github.com/kunalbuilds-git/DevelopersHub/issues).
+
+---
 
 ## License
 
-MIT
+This project is licensed under the [MIT License](LICENSE).
