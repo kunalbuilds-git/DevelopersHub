@@ -1,5 +1,6 @@
 package com.developershub.backend.service;
 
+import com.developershub.backend.dto.BookmarkResponse;
 import com.developershub.backend.entity.Bookmark;
 import com.developershub.backend.entity.BookmarkId;
 import com.developershub.backend.entity.Opportunity;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BookmarkService {
@@ -51,8 +53,11 @@ public class BookmarkService {
         bookmarkRepository.deleteById(id);
     }
 
-    public List<Bookmark> getBookmarksForUser(String userEmail) {
-        return bookmarkRepository.findByUserEmail(userEmail);
+    public List<BookmarkResponse> getBookmarksForUser(String userEmail) {
+        return bookmarkRepository.findByUserEmailOrderByOpportunityDeadline(userEmail)
+                .stream()
+                .map(BookmarkResponse::new)
+                .collect(Collectors.toList());
     }
 
     private User findUser(String email) {

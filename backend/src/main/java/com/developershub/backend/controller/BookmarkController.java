@@ -1,6 +1,6 @@
 package com.developershub.backend.controller;
 
-import com.developershub.backend.entity.Bookmark;
+import com.developershub.backend.dto.BookmarkResponse;
 import com.developershub.backend.service.BookmarkService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,7 +35,7 @@ public class BookmarkController {
     }
 
     @GetMapping
-    public List<Bookmark> getMyBookmarks(Authentication authentication) {
+    public List<BookmarkResponse> getMyBookmarks(Authentication authentication) {
         String email = authentication.getName();
         return bookmarkService.getBookmarksForUser(email);
     }
