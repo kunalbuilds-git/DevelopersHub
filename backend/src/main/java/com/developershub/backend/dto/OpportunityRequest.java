@@ -1,6 +1,11 @@
 package com.developershub.backend.dto;
 
 import com.developershub.backend.entity.Opportunity;
+import com.developershub.backend.entity.OpportunityType;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -8,19 +13,33 @@ import java.util.Set;
 
 public class OpportunityRequest {
 
+    @NotBlank
+    @Size(max = 255)
     private String title;
+
+    @NotBlank
+    @Size(max = 255)
     private String organization;
-    private String type;
+
+    @NotNull
+    private OpportunityType type;
+
+    @Size(max = 10000)
     private String description;
+
+    @Size(max = 500)
     private String url;
+
     private LocalDateTime deadline;
-    private Set<String> tags = new HashSet<>();
+
+    @Valid
+    private Set<@NotBlank @Size(max = 50) String> tags = new HashSet<>();
 
     public Opportunity toOpportunity() {
         Opportunity opportunity = new Opportunity();
         opportunity.setTitle(title);
         opportunity.setOrganization(organization);
-        opportunity.setType(type);
+        opportunity.setType(type.name());
         opportunity.setDescription(description);
         opportunity.setUrl(url);
         opportunity.setDeadline(deadline);
@@ -43,11 +62,11 @@ public class OpportunityRequest {
         this.organization = organization;
     }
 
-    public String getType() {
+    public OpportunityType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(OpportunityType type) {
         this.type = type;
     }
 

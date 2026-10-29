@@ -1,5 +1,7 @@
 package com.developershub.backend.security;
 
+import com.developershub.backend.entity.User;
+import com.developershub.backend.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,10 +21,12 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
     @Autowired
-    public JwtAuthFilter(JwtUtil jwtUtil) {
+    public JwtAuthFilter(JwtUtil jwtUtil, UserRepository userRepository) {
         this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -34,17 +38,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-
-            if (jwtUtil.isTokenValid(token)) {
-                String email = jwtUtil.extractEmail(token);
-                String role = jwtUtil.extractRole(token);
-
-                var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
-                var authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
+            jwtUtil.parseToken(authHeader.substring(7)).ifPresent(claims -> {
+                // Re-check the user on every request so deleted users and demoted
+                // admins lose access immediately instead of at token expiry.
+                userRepository.findByEmail(claims.getSubject()).ifPresent(user -> {
+                    var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
+                    var authentication = new UsernamePasswordAuthenticationToken(
+                            user.getEmail(), null, authorities);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                });
+            });
         }
 
         filterChain.doFilter(request, response);
