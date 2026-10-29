@@ -1,6 +1,7 @@
 package com.developershub.backend.specification;
 
 import com.developershub.backend.entity.Opportunity;
+import com.developershub.backend.entity.OpportunityStatus;
 import com.developershub.backend.entity.OpportunityType;
 import com.developershub.backend.entity.Tag;
 import org.springframework.data.jpa.domain.Specification;
@@ -14,6 +15,11 @@ public class OpportunitySpecifications {
     public static Specification<Opportunity> hasType(OpportunityType type) {
         return (root, query, cb) ->
             type == null ? null : cb.equal(root.get("type"), type.name());
+    }
+
+    public static Specification<Opportunity> hasStatus(OpportunityStatus status) {
+        return (root, query, cb) ->
+            status == null ? null : cb.equal(root.get("status"), status);
     }
 
     public static Specification<Opportunity> hasTag(String tagName) {

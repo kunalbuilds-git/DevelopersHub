@@ -4,6 +4,7 @@ import com.developershub.backend.dto.BookmarkResponse;
 import com.developershub.backend.entity.Bookmark;
 import com.developershub.backend.entity.BookmarkId;
 import com.developershub.backend.entity.Opportunity;
+import com.developershub.backend.entity.OpportunityStatus;
 import com.developershub.backend.entity.User;
 import com.developershub.backend.repository.BookmarkRepository;
 import com.developershub.backend.repository.OpportunityRepository;
@@ -34,6 +35,10 @@ public class BookmarkService {
         User user = findUser(userEmail);
         Opportunity opportunity = opportunityRepository.findById(opportunityId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Opportunity not found"));
+        if (opportunity.getStatus() != OpportunityStatus.APPROVED) {
+            // Pending and rejected submissions are invisible to non-admins.
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Opportunity not found");
+        }
 
         BookmarkId id = new BookmarkId(user.getId(), opportunity.getId());
         if (bookmarkRepository.existsById(id)) {

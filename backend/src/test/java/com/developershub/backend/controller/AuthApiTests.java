@@ -81,6 +81,18 @@ class AuthApiTests extends IntegrationTestBase {
     }
 
     @Test
+    void bootstrapWithoutSetupTokenIsUnavailable() {
+        register("alice@test.dev", PASSWORD);
+
+        ResponseEntity<Map<String, Object>> response = rest.postForEntity(
+                "/api/auth/admin/bootstrap",
+                new HttpEntity<>(Map.of("email", "alice@test.dev", "setupToken", "anything"), headers(null)),
+                (Class<Map<String, Object>>) (Class<?>) Map.class);
+
+        assertEquals(503, response.getStatusCode().value());
+    }
+
+    @Test
     void roleSuppliedByClientIsIgnored() {
         ResponseEntity<Map<String, Object>> response = rest.exchange(
                 "/api/auth/register",
