@@ -89,6 +89,7 @@ A layered Spring Boot backend (**Controller → Service → Repository**) with d
 | Migrations | Flyway |
 | Build tool | Maven |
 | Local dev | Docker Compose |
+| Frontend | React 19 + Vite + React Router |
 | CI | GitHub Actions |
 
 ---
@@ -175,6 +176,7 @@ All endpoints require a logged-in user.
 | `DELETE` | `/{opportunityId}` | Remove a bookmark |
 | `GET` | `/` | My saved opportunities, sorted by deadline |
 
+<<<<<<< HEAD
 ### Opportunity types
 
 `HACKATHON`, `INTERNSHIP`, `PROGRAM`, `OPEN_SOURCE`. Any other value is rejected with `400`.
@@ -263,3 +265,31 @@ A listing looks like this:
   "last": true
 }
 ```
+
+## Web frontend
+
+The `frontend/` directory contains a React (Vite) single-page app covering the v0.2 scope:
+
+- **Browse** — paginated opportunity cards with deadline chips (soonest deadlines highlighted)
+- **Search and filter** — keyword search across title and organization, a type dropdown, and a tag filter, all reflected in the URL so views are shareable
+- **Register / login** — JWT stored in `localStorage`, attached to API calls, with automatic refresh when the backend issues refresh tokens
+- **Bookmark toggle** — save or unsave any opportunity straight from its card
+- **Saved list** — your bookmarked opportunities, sorted by deadline
+
+### Run it
+
+```bash
+# 1. Start the backend on http://localhost:8080
+docker compose up -d
+cd backend && ./mvnw spring-boot:run
+
+# 2. Start the frontend dev server (in a second terminal)
+cd frontend
+npm install
+npm run dev
+# open http://localhost:5173
+```
+
+The Vite dev server proxies `/api` requests to the backend on port 8080, so no CORS setup is needed for local development. For other setups, set `CORS_ALLOWED_ORIGINS` on the backend.
+
+`npm run build` produces a production bundle in `frontend/dist`. CI builds the frontend on every pull request.
