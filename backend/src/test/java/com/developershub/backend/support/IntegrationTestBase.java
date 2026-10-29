@@ -1,5 +1,6 @@
 package com.developershub.backend.support;
 
+import com.developershub.backend.security.RateLimiter;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,8 +34,12 @@ public abstract class IntegrationTestBase {
     @Autowired
     protected JdbcTemplate jdbc;
 
+    @Autowired
+    protected RateLimiter rateLimiter;
+
     @BeforeEach
     void cleanDatabase() {
+        rateLimiter.reset();
         jdbc.update("DELETE FROM bookmark");
         jdbc.update("DELETE FROM opportunity_tag");
         jdbc.update("DELETE FROM opportunity");

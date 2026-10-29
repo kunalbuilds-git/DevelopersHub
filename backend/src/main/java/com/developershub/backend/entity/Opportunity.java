@@ -30,6 +30,10 @@ public class Opportunity {
 
     private LocalDateTime deadline;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private OpportunityStatus status = OpportunityStatus.APPROVED;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -103,6 +107,14 @@ public class Opportunity {
 
     public void setDeadline(LocalDateTime deadline) {
         this.deadline = deadline;
+    }
+
+    public OpportunityStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OpportunityStatus status) {
+        this.status = status;
     }
 
     public LocalDateTime getCreatedAt() {
