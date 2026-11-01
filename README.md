@@ -1,6 +1,8 @@
+<div align="center">
+
 # DevelopersHub
 
-> A developer-focused platform for discovering resources, projects, tools, and opportunities — all in one place.
+A developer-focused platform for discovering resources, projects, tools, and opportunities, all in one place.
 
 ![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?logo=springboot&logoColor=white)
@@ -10,34 +12,53 @@
 ![CI](https://github.com/kunalbuilds-git/DevelopersHub/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+[About](#about) | [Features](#features) | [Architecture](#architecture) | [Tech Stack](#tech-stack) | [Local development](#local-development) | [API](#api-overview) | [Errors](#errors) | [Example](#example)
+
+</div>
+
+---
+
 ## About
 
-Student developers juggle hackathons, internships, GSoC-style programs, and beginner-friendly open-source issues scattered across a dozen different sites. DevelopersHub brings them into one searchable, filterable, personal place — built both as a real tool and as a hands-on backend learning project.
+Student developers juggle hackathons, internships, GSoC-style programs, and beginner-friendly open-source issues scattered across a dozen different sites. DevelopersHub brings them into one searchable, filterable, personal place. It is built both as a real tool and as a hands-on backend learning project.
 
-**v0.1 backend core is complete** — full CRUD, auth, role-based access, tagging, search, bookmarking, and CI, all hand-built and verified end-to-end.
+> **v0.1 backend core is complete.** Full CRUD, auth, role-based access, tagging, search, bookmarking, and CI, all hand-built and verified end-to-end.
+
+---
 
 ## Features
 
+**Opportunities**
+
 - Full CRUD for opportunities (create, read, update, delete) with request validation and correct HTTP status codes
 - Paginated listing with total count and page metadata (page size capped at 50)
-- Many-to-many tagging (opportunities ↔ tags) through a normalized join table
+- Many-to-many tagging (opportunities and tags) through a normalized join table
 - Combined filtering by type, tag, and keyword, built with Spring Data JPA Specifications
 - Case-insensitive keyword search across title and organization, with LIKE wildcards escaped
-- User registration and login with JWT authentication (BCrypt password hashing)
-- Short-lived access tokens plus rotating, single-use refresh tokens with logout
-- Role-based access control — only admins can create, edit, or delete opportunities
-- One-time admin bootstrap so the first account can claim the ADMIN role without touching the database
-- Sliding-window rate limiting on register, login, and bootstrap (429 with a per-IP budget)
 - Any user can submit an opportunity; submissions stay hidden until an admin approves or rejects them
 - Bookmark / unbookmark opportunities, with a personal saved list sorted by deadline
+
+**Auth and security**
+
+- User registration and login with JWT authentication (BCrypt password hashing)
+- Short-lived access tokens plus rotating, single-use refresh tokens with logout
+- Role-based access control: only admins can create, edit, or delete opportunities
+- One-time admin bootstrap so the first account can claim the ADMIN role without touching the database
+- Sliding-window rate limiting on register, login, and bootstrap (429 with a per-IP budget)
+
+**Engineering**
+
 - Versioned schema migrations with Flyway, plus indexes on the filtered columns
 - RFC 7807 ProblemDetail error responses for validation, conflicts, and bad input
 - Dockerized PostgreSQL for local development
-- Continuous integration — the test suite runs on every pull request and on pushes to main
+- Continuous integration: the test suite runs on every pull request and on pushes to main
 
 ### Planned next
+
 - Frontend (web UI)
 - Deployment
+
+---
 
 ## Architecture
 
@@ -52,7 +73,9 @@ flowchart LR
     Flyway["Flyway Migrations"] --> DB
 ```
 
-A layered Spring Boot backend — **Controller → Service → Repository** — with dynamic filtering through composable JPA Specifications and stateless JWT-based authentication.
+A layered Spring Boot backend (**Controller → Service → Repository**) with dynamic filtering through composable JPA Specifications and stateless JWT-based authentication.
+
+---
 
 ## Tech Stack
 
@@ -68,6 +91,8 @@ A layered Spring Boot backend — **Controller → Service → Repository** — 
 | Local dev | Docker Compose |
 | CI | GitHub Actions |
 
+---
+
 ## Local development
 
 ```bash
@@ -81,10 +106,15 @@ cd backend
 
 The API listens on `http://localhost:8080`. Configuration is environment-driven, with development defaults baked in:
 
+<details>
+<summary>Environment variables</summary>
+
+<br/>
+
 | Variable | Default | Purpose |
 |---|---|---|
-| `JWT_SECRET` | *(generated at startup)* | HMAC key for signing tokens. **Set this in production** — at least 32 bytes. Without it a random key is generated per restart, so tokens do not survive a restart. |
-| `JWT_EXPIRATION_MS` | `1800000` (30 min) | Access-token lifetime. Short by design — the refresh token is the long-lived credential. |
+| `JWT_SECRET` | *(generated at startup)* | HMAC key for signing tokens. **Set this in production**, at least 32 bytes. Without it a random key is generated per restart, so tokens do not survive a restart. |
+| `JWT_EXPIRATION_MS` | `1800000` (30 min) | Access-token lifetime. Short by design, since the refresh token is the long-lived credential. |
 | `REFRESH_TOKEN_EXPIRATION_DAYS` | `7` | Refresh-token lifetime in days. |
 | `ADMIN_SETUP_TOKEN` | *(unset)* | One-time token that lets the first account claim ADMIN via `POST /api/auth/admin/bootstrap`. Unset disables the endpoint; it refuses to run once an admin exists. |
 | `DB_URL` | `jdbc:postgresql://localhost:5432/developershub` | Database URL. |
@@ -96,6 +126,8 @@ The API listens on `http://localhost:8080`. Configuration is environment-driven,
 | `RATE_LIMIT_BOOTSTRAP_MAX` | `3` | Bootstrap attempts per IP per window. |
 | `CORS_ALLOWED_ORIGINS` | *(empty)* | Comma-separated browser origins allowed to call the API. Empty disables CORS. |
 
+</details>
+
 ### Tests
 
 ```bash
@@ -105,23 +137,25 @@ cd backend
 
 Tests run against a dedicated `developershub_test` database, which is created automatically, so local development data is never touched. The suite covers authentication, role-based access, opportunity CRUD and filtering, bookmarks, and JWT handling.
 
+---
+
 ## API Overview
 
-**Opportunities** — `/api/opportunities`
+### Opportunities: `/api/opportunities`
 
 | Method | Endpoint | Auth required |
 |---|---|---|
-| `GET` | `/` | No — filterable by `type`, `tag`, `keyword`, paginated. Only approved opportunities. |
+| `GET` | `/` | No. Filterable by `type`, `tag`, `keyword`, paginated. Only approved opportunities. |
 | `GET` | `/{id}` | No |
-| `POST` | `/` | Admin — created approved |
+| `POST` | `/` | Admin. Created approved |
 | `PUT` | `/{id}` | Admin |
 | `DELETE` | `/{id}` | Admin |
-| `POST` | `/submissions` | Logged-in user — creates a pending submission |
-| `GET` | `/submissions` | Admin — the review queue, `?status=PENDING\|APPROVED\|REJECTED` |
+| `POST` | `/submissions` | Logged-in user. Creates a pending submission |
+| `GET` | `/submissions` | Admin. The review queue, `?status=PENDING\|APPROVED\|REJECTED` |
 | `POST` | `/submissions/{id}/approve` | Admin |
 | `POST` | `/submissions/{id}/reject` | Admin |
 
-**Auth** — `/api/auth`
+### Auth: `/api/auth`
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -131,7 +165,9 @@ Tests run against a dedicated `developershub_test` database, which is created au
 | `POST` | `/logout` | Revoke a refresh token |
 | `POST` | `/admin/bootstrap` | Grant ADMIN to an existing account while no admin exists |
 
-**Bookmarks** — `/api/bookmarks` (all require a logged-in user)
+### Bookmarks: `/api/bookmarks`
+
+All endpoints require a logged-in user.
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -141,9 +177,11 @@ Tests run against a dedicated `developershub_test` database, which is created au
 
 ### Opportunity types
 
-`HACKATHON`, `INTERNSHIP`, `PROGRAM`, `OPEN_SOURCE` — any other value is rejected with `400`.
+`HACKATHON`, `INTERNSHIP`, `PROGRAM`, `OPEN_SOURCE`. Any other value is rejected with `400`.
 
-### Errors
+---
+
+## Errors
 
 Errors are returned as RFC 7807 ProblemDetail documents:
 
@@ -162,12 +200,14 @@ Errors are returned as RFC 7807 ProblemDetail documents:
 | `400` | Validation failure, malformed body, unknown opportunity type, bad parameter |
 | `401` | Wrong credentials, or a token that is missing, expired, or invalid |
 | `403` | Authenticated but not allowed (for example, a non-admin creating an opportunity) |
-| `404` | Opportunity or bookmark does not exist — includes pending submissions, which are invisible to non-admins |
+| `404` | Opportunity or bookmark does not exist, including pending submissions, which are invisible to non-admins |
 | `409` | Email already registered, opportunity already bookmarked, or a submission reviewed twice |
 | `429` | Rate limit exceeded on register, login, or bootstrap |
 | `503` | Admin bootstrap attempted while `ADMIN_SETUP_TOKEN` is not configured |
 
-### Example
+---
+
+## Example
 
 ```bash
 # Register (returns both tokens)
