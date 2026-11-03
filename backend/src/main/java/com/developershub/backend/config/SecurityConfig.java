@@ -45,9 +45,12 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             // Missing/invalid credentials mean 401 (so clients trigger their refresh
-            // flow); a valid token without permission still gets the default 403.
-            .exceptionHandling(ex -> ex.authenticationEntryPoint(
-                (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
+            // flow); a valid token without permission still gets 403.
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) ->
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN)))
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

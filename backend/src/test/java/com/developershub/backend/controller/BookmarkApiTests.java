@@ -51,7 +51,8 @@ class BookmarkApiTests extends IntegrationTestBase {
         Long id = createOpportunity(adminToken("admin@test.dev"),
                 opportunityBody("Target", "HACKATHON", null));
 
-        assertEquals(403, bookmark(null, id, HttpMethod.POST).getStatusCode().value());
+        // 401 (not 403): unauthenticated clients should trigger their login/refresh flow.
+        assertEquals(401, bookmark(null, id, HttpMethod.POST).getStatusCode().value());
     }
 
     @Test

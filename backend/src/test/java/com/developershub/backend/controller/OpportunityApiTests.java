@@ -80,7 +80,8 @@ class OpportunityApiTests extends IntegrationTestBase {
 
     @Test
     void anonymousCannotCreate() {
-        assertEquals(403, create(opportunityBody("Anon Probe", "HACKATHON", null), null).getStatusCode().value());
+        // 401 (not 403): unauthenticated clients should trigger their login/refresh flow.
+        assertEquals(401, create(opportunityBody("Anon Probe", "HACKATHON", null), null).getStatusCode().value());
     }
 
     @Test
