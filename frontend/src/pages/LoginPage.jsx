@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { LogIn } from 'lucide-react'
+import AuthLayout from '../components/AuthLayout.jsx'
 import { useAuth } from '../auth/AuthContext.jsx'
 
 export default function LoginPage() {
@@ -28,14 +30,18 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="auth-page">
-      <h1>Welcome back</h1>
-      <p className="page-subtitle">Log in to save opportunities and keep track of deadlines.</p>
-      <form className="auth-form" onSubmit={handleSubmit}>
-        <label className="field">
-          <span>Email</span>
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Log in to save opportunities and keep track of deadlines."
+      switchText="New here?"
+      switchTo="/register"
+      switchLabel="Create an account"
+    >
+      <form className="mt-7 flex flex-col gap-4" onSubmit={handleSubmit}>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Email</span>
           <input
-            className="input"
+            className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-accent-400/50 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
             type="email"
             required
             value={email}
@@ -44,10 +50,10 @@ export default function LoginPage() {
             autoComplete="email"
           />
         </label>
-        <label className="field">
-          <span>Password</span>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Password</span>
           <input
-            className="input"
+            className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-accent-400/50 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
             type="password"
             required
             value={password}
@@ -56,14 +62,20 @@ export default function LoginPage() {
             autoComplete="current-password"
           />
         </label>
-        {error && <p className="alert alert-error">{error}</p>}
-        <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
+        {error && (
+          <p className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3.5 py-2.5 text-sm text-rose-300">
+            {error}
+          </p>
+        )}
+        <button
+          type="submit"
+          disabled={busy}
+          className="mt-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent-600 to-accent-500 py-2.5 text-sm font-semibold text-white shadow-lg shadow-accent-600/30 transition hover:brightness-110 disabled:opacity-60"
+        >
+          <LogIn className="size-4" />
           {busy ? 'Logging in…' : 'Log in'}
         </button>
       </form>
-      <p className="auth-switch">
-        New here? <Link to="/register">Create an account</Link>
-      </p>
-    </section>
+    </AuthLayout>
   )
 }

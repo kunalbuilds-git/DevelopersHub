@@ -3,22 +3,32 @@ import { api, clearStoredAuth, getStoredAuth, storeAuth } from '../api/client.js
 
 const AuthContext = createContext(null)
 
+/** The JWT payload carries the role; decode it client-side for UI hints only. */
+function decodeRole(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return payload.role || 'USER'
+  } catch {
+    return 'USER'
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const { token, email } = getStoredAuth()
-    return token ? { email } : null
+    return token ? { email, role: decodeRole(token) } : null
   })
 
   const login = useCallback(async (email, password) => {
     const data = await api('/auth/login', { method: 'POST', body: { email, password }, auth: false })
     storeAuth({ ...data, email })
-    setUser({ email })
+    setUser({ email, role: decodeRole(data.token) })
   }, [])
 
   const register = useCallback(async (email, password) => {
     const data = await api('/auth/register', { method: 'POST', body: { email, password }, auth: false })
     storeAuth({ ...data, email })
-    setUser({ email })
+    setUser({ email, role: decodeRole(data.token) })
   }, [])
 
   const logout = useCallback(() => {
@@ -33,7 +43,14 @@ export function AuthProvider({ children }) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, login, register, logout, isLoggedIn: user !== null }),
+    () => ({
+      user,
+      login,
+      register,
+      logout,
+      isLoggedIn: user !== null,
+      isAdmin: user?.role === 'ADMIN',
+    }),
     [user, login, register, logout],
   )
 

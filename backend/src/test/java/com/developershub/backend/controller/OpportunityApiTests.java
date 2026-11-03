@@ -111,6 +111,28 @@ class OpportunityApiTests extends IntegrationTestBase {
     }
 
     @Test
+    void filtersByLevelAndAcceptsEventType() {
+        Map<String, Object> beginnerEvent = opportunityBody("Campus AI Day", "EVENT", "2026-12-01T10:00:00", "ai");
+        beginnerEvent.put("level", "BEGINNER");
+        createOpportunity(admin(), beginnerEvent);
+
+        Map<String, Object> advanced = opportunityBody("Kernel Hack Week", "HACKATHON", null);
+        advanced.put("level", "ADVANCED");
+        createOpportunity(admin(), advanced);
+
+        createOpportunity(admin(), opportunityBody("No Level Filter", "PROGRAM", null));
+
+        ResponseEntity<Map<String, Object>> byLevel = list("?level=BEGINNER");
+        assertEquals(1, content(byLevel).size());
+        assertEquals("Campus AI Day", content(byLevel).get(0).get("title"));
+        assertEquals("BEGINNER", content(byLevel).get(0).get("level"));
+
+        assertEquals(1, content(list("?type=EVENT")).size());
+        assertEquals(1, content(list("?level=BEGINNER&tag=ai")).size());
+        assertEquals(400, list("?level=EXPERT").getStatusCode().value());
+    }
+
+    @Test
     void keywordWildcardsAreEscaped() {
         create(opportunityBody("Spring Boot Hackathon", "HACKATHON", null), admin());
 

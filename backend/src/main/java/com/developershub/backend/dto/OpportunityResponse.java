@@ -1,6 +1,7 @@
 package com.developershub.backend.dto;
 
 import com.developershub.backend.entity.Opportunity;
+import com.developershub.backend.entity.OpportunityLevel;
 import com.developershub.backend.entity.OpportunityStatus;
 import com.developershub.backend.entity.Tag;
 
@@ -19,6 +20,7 @@ public record OpportunityResponse(
         String title,
         String organization,
         String type,
+        OpportunityLevel level,
         String description,
         String url,
         LocalDateTime deadline,
@@ -45,6 +47,7 @@ public record OpportunityResponse(
                 opportunity.getTitle(),
                 opportunity.getOrganization(),
                 opportunity.getType(),
+                opportunity.getLevel(),
                 opportunity.getDescription(),
                 opportunity.getUrl(),
                 opportunity.getDeadline(),

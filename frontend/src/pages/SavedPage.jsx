@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { BookmarkX } from 'lucide-react'
 import { api } from '../api/client.js'
-import { useSaved } from '../saved/SavedContext.jsx'
+import EmptyState from '../components/EmptyState.jsx'
 import OpportunityCard from '../components/OpportunityCard.jsx'
+import { SkeletonGrid } from '../components/SkeletonCard.jsx'
+import { useSaved } from '../saved/SavedContext.jsx'
 
 export default function SavedPage() {
   const [bookmarks, setBookmarks] = useState(null)
@@ -36,41 +39,54 @@ export default function SavedPage() {
   }
 
   return (
-    <section>
-      <div className="page-head">
-        <h1>Saved opportunities</h1>
-        <p className="page-subtitle">Sorted by deadline — the soonest first, so nothing sneaks up on you.</p>
+    <section className="pt-10">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight text-white">Saved opportunities</h1>
+        <p className="mt-1.5 text-slate-400">
+          Sorted by deadline — the soonest first, so nothing sneaks up on you.
+        </p>
       </div>
 
-      {error && <p className="alert alert-error">{error}</p>}
-      {loading && <p className="muted">Loading your saved list…</p>}
+      {error && (
+        <p className="mb-6 rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+          {error}
+        </p>
+      )}
+      {loading && <SkeletonGrid count={3} />}
 
       {!loading && !error && bookmarks?.length === 0 && (
-        <div className="empty-state">
-          <p className="empty-title">Nothing saved yet</p>
-          <p className="muted">
-            Tap <strong>☆ Save</strong> on any opportunity and it will show up here.{' '}
-            <Link to="/">Browse opportunities →</Link>
+        <EmptyState title="Nothing saved yet">
+          <p>
+            Tap <strong className="text-amber-300">Save</strong> on any opportunity and it will show up here.{' '}
+            <Link to="/" className="font-semibold text-accent-300 hover:text-accent-400">
+              Browse opportunities →
+            </Link>
           </p>
-        </div>
+        </EmptyState>
       )}
 
-      <div className="card-grid">
-        {(bookmarks || []).map((bookmark) => (
-          <div key={bookmark.opportunityId} className="saved-item">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {(bookmarks || []).map((bookmark, index) => (
+          <div key={bookmark.opportunityId} className="flex flex-col gap-2">
             <OpportunityCard
+              index={index}
               opportunity={{
                 id: bookmark.opportunityId,
                 title: bookmark.title,
                 organization: bookmark.organization,
                 type: bookmark.type,
+                level: null,
                 description: null,
                 url: null,
                 deadline: bookmark.deadline,
                 tags: [],
               }}
             />
-            <button className="btn btn-ghost saved-remove" onClick={() => remove(bookmark.opportunityId)}>
+            <button
+              onClick={() => remove(bookmark.opportunityId)}
+              className="self-end rounded-lg px-2 py-1 text-xs font-medium text-slate-500 transition hover:text-rose-300"
+            >
+              <BookmarkX className="mr-1 inline size-3.5" />
               Remove
             </button>
           </div>

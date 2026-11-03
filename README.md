@@ -176,10 +176,9 @@ All endpoints require a logged-in user.
 | `DELETE` | `/{opportunityId}` | Remove a bookmark |
 | `GET` | `/` | My saved opportunities, sorted by deadline |
 
-<<<<<<< HEAD
 ### Opportunity types
 
-`HACKATHON`, `INTERNSHIP`, `PROGRAM`, `OPEN_SOURCE`. Any other value is rejected with `400`.
+`HACKATHON`, `INTERNSHIP`, `PROGRAM`, `OPEN_SOURCE`, `EVENT`. Any other value is rejected with `400`. Opportunities also carry a `level` (`ANY`, `BEGINNER`, `INTERMEDIATE`, `ADVANCED`) that is filterable via `?level=`.
 
 ---
 
@@ -270,11 +269,13 @@ A listing looks like this:
 
 The `frontend/` directory contains a React (Vite) single-page app covering the v0.2 scope:
 
-- **Browse** — paginated opportunity cards with deadline chips (soonest deadlines highlighted)
-- **Search and filter** — keyword search across title and organization, a type dropdown, and a tag filter, all reflected in the URL so views are shareable
+- **Browse** — paginated opportunity cards with deadline countdowns (soonest highlighted)
+- **Search and filter** — keyword search across title and organization, type pills, level filter (beginner/intermediate/advanced), and tag filter, all reflected in the URL so views are shareable
 - **Register / login** — JWT stored in `localStorage`, attached to API calls, with automatic refresh when the backend issues refresh tokens
 - **Bookmark toggle** — save or unsave any opportunity straight from its card
 - **Saved list** — your bookmarked opportunities, sorted by deadline
+- **Submit** — users share opportunities they find; submissions go live after admin approval
+- **Review** — admins approve or reject pending submissions from a queue
 
 ### Run it
 
