@@ -1,5 +1,6 @@
 package com.developershub.backend.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import com.developershub.backend.entity.Opportunity;
 import com.developershub.backend.entity.OpportunityLevel;
 import com.developershub.backend.entity.OpportunityStatus;
@@ -15,6 +16,7 @@ import java.util.Set;
  * daysUntilDeadline lets clients highlight closing opportunities without
  * doing date math in the browser.
  */
+@Schema(description = "An opportunity as returned by the API")
 public record OpportunityResponse(
         Long id,
         String title,
@@ -29,6 +31,7 @@ public record OpportunityResponse(
         Long daysUntilDeadline,
         Set<TagResponse> tags) {
 
+    @Schema(description = "A tag on the opportunity")
     public record TagResponse(Long id, String name) {
         public static TagResponse from(Tag tag) {
             return new TagResponse(tag.getId(), tag.getName());

@@ -101,8 +101,8 @@ class OpportunityApiTests extends IntegrationTestBase {
     @Test
     void filtersByTypeTagAndKeywordCaseInsensitively() {
         create(opportunityBody("Spring Boot Hackathon", "HACKATHON", "2026-12-01T10:00:00", "Java"), admin());
-        create(opportunityBody("Backend Internship", "INTERNSHIP", "2026-11-01T10:00:00", "Java", "Remote"), admin());
-        create(opportunityBody("Docs Sprint", "OPEN_SOURCE", "2026-10-01T10:00:00", "Docs"), admin());
+        create(opportunityBody("Backend Internship", "INTERNSHIP", "2027-11-01T10:00:00", "Java", "Remote"), admin());
+        create(opportunityBody("Docs Sprint", "OPEN_SOURCE", "2027-10-01T10:00:00", "Docs"), admin());
 
         assertEquals(1, content(list("?type=HACKATHON")).size());
         assertEquals(2, content(list("?tag=java")).size());

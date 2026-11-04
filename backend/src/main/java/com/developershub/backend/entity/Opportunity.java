@@ -49,6 +49,11 @@ public class Opportunity {
     )
     private Set<Tag> tags = new HashSet<>();
 
+    /** The student who submitted this opportunity; null for admin-curated ones. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "submitted_by")
+    private User submittedBy;
+
     public Opportunity() {
     }
 
@@ -139,5 +144,13 @@ public class Opportunity {
 
     public void setTags(Set<Tag> tags) {
         this.tags = tags;
+    }
+
+    public User getSubmittedBy() {
+        return submittedBy;
+    }
+
+    public void setSubmittedBy(User submittedBy) {
+        this.submittedBy = submittedBy;
     }
 }

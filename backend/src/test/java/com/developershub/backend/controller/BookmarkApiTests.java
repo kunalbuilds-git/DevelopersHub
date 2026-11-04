@@ -92,9 +92,9 @@ class BookmarkApiTests extends IntegrationTestBase {
         String token = alice();
         String admin = adminToken("admin@test.dev");
         Long december = createOpportunity(admin,
-                opportunityBody("December Event", "HACKATHON", "2026-12-20T10:00:00"));
+                opportunityBody("December Event", "HACKATHON", "2027-12-20T10:00:00"));
         Long june = createOpportunity(admin,
-                opportunityBody("June Event", "INTERNSHIP", "2026-06-15T10:00:00"));
+                opportunityBody("June Event", "INTERNSHIP", "2027-06-15T10:00:00"));
         Long noDeadline = createOpportunity(admin,
                 opportunityBody("No Deadline", "PROGRAM", null));
 

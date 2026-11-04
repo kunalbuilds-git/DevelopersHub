@@ -1,9 +1,11 @@
 package com.developershub.backend.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import com.developershub.backend.entity.Bookmark;
 
 import java.time.LocalDateTime;
 
+@Schema(description = "A bookmarked opportunity in your saved list")
 public class BookmarkResponse {
 
     private Long opportunityId;

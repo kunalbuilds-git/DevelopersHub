@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import jakarta.persistence.criteria.Join;
 
+import java.time.LocalDateTime;
 import java.util.Locale;
 
 public class OpportunitySpecifications {
@@ -26,6 +27,22 @@ public class OpportunitySpecifications {
     public static Specification<Opportunity> hasLevel(OpportunityLevel level) {
         return (root, query, cb) ->
             level == null ? null : cb.equal(root.get("level"), level);
+    }
+
+    /**
+     * Excludes opportunities whose deadline has already passed. A missing
+     * deadline is never treated as expired.
+     */
+    public static Specification<Opportunity> hasNotExpired(LocalDateTime now) {
+        return (root, query, cb) -> cb.or(
+                cb.isNull(root.get("deadline")),
+                cb.greaterThanOrEqualTo(root.get("deadline"), now));
+    }
+
+    /** Restricts to opportunities submitted by a specific user. */
+    public static Specification<Opportunity> hasSubmittedBy(Long userId) {
+        return (root, query, cb) ->
+            userId == null ? null : cb.equal(root.get("submittedBy").get("id"), userId);
     }
 
     public static Specification<Opportunity> hasTag(String tagName) {
