@@ -96,11 +96,26 @@ A layered Spring Boot backend (**Controller → Service → Repository**) with d
 
 ## Local development
 
-```bash
-# 1. Start PostgreSQL
-docker compose up -d
+The whole stack runs with one command:
 
-# 2. Run the API (from backend/)
+```bash
+docker compose up --build
+```
+
+That builds the API image, starts PostgreSQL, waits for the database to become
+healthy, and starts the API on `http://localhost:8080`. Configuration comes from
+the environment — copy `.env.example` to `.env` and adjust it (`.env` is
+git-ignored; no secrets are committed).
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Prefer running the API on your own JDK while developing? Start only the database:
+
+```bash
+docker compose up -d db
 cd backend
 ./mvnw spring-boot:run
 ```
@@ -129,6 +144,13 @@ The API listens on `http://localhost:8080`. Configuration is environment-driven,
 
 </details>
 
+### Health and API docs
+
+- `GET /actuator/health` — public liveness/readiness probe. Reports `UP` while the
+  database is reachable, `DOWN` when it is not, and never exposes component details.
+- `GET /swagger-ui.html` — interactive Swagger UI for the whole API.
+- `GET /v3/api-docs` — the raw OpenAPI description.
+
 ### Tests
 
 ```bash
@@ -136,7 +158,7 @@ cd backend
 ./mvnw test
 ```
 
-Tests run against a dedicated `developershub_test` database, which is created automatically, so local development data is never touched. The suite covers authentication, role-based access, opportunity CRUD and filtering, bookmarks, and JWT handling.
+Tests run against a dedicated `developershub_test` database, which is created automatically, so local development data is never touched. The suite covers authentication, role-based access, opportunity CRUD and filtering, bookmarks, JWT handling, health and OpenAPI endpoints, expiry filtering, and per-user submission isolation.
 
 ---
 
@@ -146,13 +168,14 @@ Tests run against a dedicated `developershub_test` database, which is created au
 
 | Method | Endpoint | Auth required |
 |---|---|---|
-| `GET` | `/` | No. Filterable by `type`, `tag`, `keyword`, paginated. Only approved opportunities. |
+| `GET` | `/` | No. Filterable by `type`, `level`, `tag`, `keyword`, paginated. Only approved opportunities. Past-deadline items are hidden unless `?includeExpired=true`. |
 | `GET` | `/{id}` | No |
 | `POST` | `/` | Admin. Created approved |
 | `PUT` | `/{id}` | Admin |
 | `DELETE` | `/{id}` | Admin |
 | `POST` | `/submissions` | Logged-in user. Creates a pending submission |
 | `GET` | `/submissions` | Admin. The review queue, `?status=PENDING\|APPROVED\|REJECTED` |
+| `GET` | `/submissions/mine` | Logged-in user. Only your own submissions, optional `?status=` filter |
 | `POST` | `/submissions/{id}/approve` | Admin |
 | `POST` | `/submissions/{id}/reject` | Admin |
 
@@ -180,6 +203,16 @@ All endpoints require a logged-in user.
 
 `HACKATHON`, `INTERNSHIP`, `PROGRAM`, `OPEN_SOURCE`, `EVENT`. Any other value is rejected with `400`. Opportunities also carry a `level` (`ANY`, `BEGINNER`, `INTERMEDIATE`, `ADVANCED`) that is filterable via `?level=`.
 
+### Operations
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/actuator/health` | Public. `UP` while the API and database are healthy, `DOWN` otherwise. No details exposed. |
+| `GET` | `/actuator/health/liveness` | Public liveness probe |
+| `GET` | `/actuator/health/readiness` | Public readiness probe |
+| `GET` | `/swagger-ui.html` | Interactive Swagger UI (public) |
+| `GET` | `/v3/api-docs` | OpenAPI 3 description (public) |
+
 ---
 
 ## Errors
@@ -203,6 +236,7 @@ Errors are returned as RFC 7807 ProblemDetail documents:
 | `403` | Authenticated but not allowed (for example, a non-admin creating an opportunity) |
 | `404` | Opportunity or bookmark does not exist, including pending submissions, which are invisible to non-admins |
 | `409` | Email already registered, opportunity already bookmarked, or a submission reviewed twice |
+| `429` | Rate limit exceeded on register, login, or bootstrap |
 | `429` | Rate limit exceeded on register, login, or bootstrap |
 | `503` | Admin bootstrap attempted while `ADMIN_SETUP_TOKEN` is not configured |
 
@@ -276,12 +310,14 @@ The `frontend/` directory contains a React (Vite) single-page app covering the v
 - **Saved list** — your bookmarked opportunities, sorted by deadline
 - **Submit** — users share opportunities they find; submissions go live after admin approval
 - **Review** — admins approve or reject pending submissions from a queue
+- **My submissions** — track the status of everything you have submitted
+- **Show expired** — a toggle that reveals opportunities whose deadline has passed
 
 ### Run it
 
 ```bash
 # 1. Start the backend on http://localhost:8080
-docker compose up -d
+docker compose up -d db
 cd backend && ./mvnw spring-boot:run
 
 # 2. Start the frontend dev server (in a second terminal)
