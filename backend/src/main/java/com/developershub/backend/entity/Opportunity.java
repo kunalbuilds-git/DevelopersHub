@@ -34,6 +34,10 @@ public class Opportunity {
     @Column(nullable = false, length = 20)
     private OpportunityStatus status = OpportunityStatus.APPROVED;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private OpportunityLevel level = OpportunityLevel.ANY;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -115,6 +119,14 @@ public class Opportunity {
 
     public void setStatus(OpportunityStatus status) {
         this.status = status;
+    }
+
+    public OpportunityLevel getLevel() {
+        return level;
+    }
+
+    public void setLevel(OpportunityLevel level) {
+        this.level = level;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -52,6 +53,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ProblemDetail> handleDataIntegrity(DataIntegrityViolationException ex) {
         return problem(HttpStatus.CONFLICT, "The request conflicts with an existing resource");
+    }
+
+    /**
+     * Method-security denials (a valid token lacking the required role) surface
+     * here, inside Spring MVC. Anonymous denials are stopped earlier by the
+     * security filter chain and answered with 401 by the authentication entry
+     * point, so this handler only ever sees authenticated-but-forbidden calls.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException ex) {
+        return problem(HttpStatus.FORBIDDEN, "You do not have permission to perform this action");
     }
 
     private ResponseEntity<ProblemDetail> problem(HttpStatus status, String detail) {

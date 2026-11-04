@@ -1,6 +1,7 @@
 package com.developershub.backend.service;
 
 import com.developershub.backend.entity.Opportunity;
+import com.developershub.backend.entity.OpportunityLevel;
 import com.developershub.backend.entity.OpportunityStatus;
 import com.developershub.backend.entity.OpportunityType;
 import com.developershub.backend.entity.Tag;
@@ -19,6 +20,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.developershub.backend.specification.OpportunitySpecifications.hasLevel;
 import static com.developershub.backend.specification.OpportunitySpecifications.hasStatus;
 import static com.developershub.backend.specification.OpportunitySpecifications.hasType;
 import static com.developershub.backend.specification.OpportunitySpecifications.hasTag;
@@ -37,10 +39,11 @@ public class OpportunityService {
     }
 
     /** Public listing: only curated (APPROVED) opportunities are visible. */
-    public Page<Opportunity> findAll(OpportunityType type, String tag, String keyword, Pageable pageable) {
+    public Page<Opportunity> findAll(OpportunityType type, OpportunityLevel level, String tag, String keyword, Pageable pageable) {
         Specification<Opportunity> spec = Specification
                 .where(hasStatus(OpportunityStatus.APPROVED))
                 .and(hasType(type))
+                .and(hasLevel(level))
                 .and(hasTag(tag))
                 .and(hasKeyword(keyword));
         return repository.findAll(spec, pageable);

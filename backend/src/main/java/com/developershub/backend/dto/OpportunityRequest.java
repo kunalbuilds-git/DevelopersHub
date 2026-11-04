@@ -1,6 +1,7 @@
 package com.developershub.backend.dto;
 
 import com.developershub.backend.entity.Opportunity;
+import com.developershub.backend.entity.OpportunityLevel;
 import com.developershub.backend.entity.OpportunityType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -24,6 +25,8 @@ public class OpportunityRequest {
     @NotNull
     private OpportunityType type;
 
+    private OpportunityLevel level;
+
     @Size(max = 10000)
     private String description;
 
@@ -40,6 +43,7 @@ public class OpportunityRequest {
         opportunity.setTitle(title);
         opportunity.setOrganization(organization);
         opportunity.setType(type.name());
+        opportunity.setLevel(level == null ? OpportunityLevel.ANY : level);
         opportunity.setDescription(description);
         opportunity.setUrl(url);
         opportunity.setDeadline(deadline);
@@ -68,6 +72,14 @@ public class OpportunityRequest {
 
     public void setType(OpportunityType type) {
         this.type = type;
+    }
+
+    public OpportunityLevel getLevel() {
+        return level;
+    }
+
+    public void setLevel(OpportunityLevel level) {
+        this.level = level;
     }
 
     public String getDescription() {

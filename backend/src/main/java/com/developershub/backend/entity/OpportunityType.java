@@ -8,5 +8,6 @@ public enum OpportunityType {
     HACKATHON,
     INTERNSHIP,
     PROGRAM,
-    OPEN_SOURCE
+    OPEN_SOURCE,
+    EVENT
 }

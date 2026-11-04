@@ -3,6 +3,7 @@ package com.developershub.backend.controller;
 import com.developershub.backend.dto.OpportunityRequest;
 import com.developershub.backend.dto.OpportunityResponse;
 import com.developershub.backend.dto.PageResponse;
+import com.developershub.backend.entity.OpportunityLevel;
 import com.developershub.backend.entity.OpportunityStatus;
 import com.developershub.backend.entity.OpportunityType;
 import com.developershub.backend.service.OpportunityService;
@@ -33,13 +34,17 @@ public class OpportunityController {
     @GetMapping
     public PageResponse<OpportunityResponse> getAll(
             @RequestParam(required = false) String type,
+            @RequestParam(required = false) String level,
             @RequestParam(required = false) String tag,
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        OpportunityType typeFilter = parseType(type);
+        OpportunityType typeFilter = parseEnum(type, OpportunityType.class, "type");
+        OpportunityLevel levelFilter = parseEnum(level, OpportunityLevel.class, "level");
         PageRequest pageRequest = pageRequest(page, size);
-        return PageResponse.of(service.findAll(typeFilter, tag, keyword, pageRequest), OpportunityResponse::from);
+        return PageResponse.of(
+                service.findAll(typeFilter, levelFilter, tag, keyword, pageRequest),
+                OpportunityResponse::from);
     }
 
     @GetMapping("/{id}")
@@ -103,28 +108,26 @@ public class OpportunityController {
     }
 
     private OpportunityType parseType(String type) {
-        if (type == null || type.isBlank()) {
-            return null;
-        }
-        try {
-            return OpportunityType.valueOf(type.trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Unknown type: " + type + ". Allowed: HACKATHON, INTERNSHIP, PROGRAM, OPEN_SOURCE");
-        }
+        return parseEnum(type, OpportunityType.class, "type");
     }
 
     private OpportunityStatus parseStatus(String status) {
-        if (status == null || status.isBlank()) {
-            return OpportunityStatus.PENDING;
+        return status == null || status.isBlank()
+                ? OpportunityStatus.PENDING
+                : parseEnum(status, OpportunityStatus.class, "status");
+    }
+
+    private <E extends Enum<E>> E parseEnum(String raw, Class<E> enumClass, String paramName) {
+        if (raw == null || raw.isBlank()) {
+            return null;
         }
         try {
-            return OpportunityStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+            return Enum.valueOf(enumClass, raw.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
+            String allowed = String.join(", ",
+                    java.util.Arrays.stream(enumClass.getEnumConstants()).map(Enum::name).toArray(String[]::new));
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Unknown status: " + status + ". Allowed: PENDING, APPROVED, REJECTED");
+                    HttpStatus.BAD_REQUEST, "Unknown " + paramName + ": " + raw + ". Allowed: " + allowed);
         }
     }
 }
