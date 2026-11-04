@@ -40,8 +40,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/opportunities/**").permitAll()
-                // Public so uptime checks and container probes can reach it unauthenticated.
-                .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                // Public so uptime checks, container probes, and liveness probes can
+                // reach the health endpoint unauthenticated.
+                .requestMatchers(HttpMethod.GET, "/actuator/health/**").permitAll()
+                // OpenAPI description and Swagger UI are public documentation.
+                .requestMatchers("/v3/api-docs/**").permitAll()
+                .requestMatchers("/swagger-ui/**").permitAll()
+                .requestMatchers("/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
             )
             // Missing/invalid credentials mean 401 (so clients trigger their refresh

@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Bookmark, Code2, LogOut, ShieldCheck, Sparkles } from 'lucide-react'
+import { Bookmark, Code2, FileCheck2, LogOut, ShieldCheck, Sparkles } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { useSaved } from '../saved/SavedContext.jsx'
 
@@ -45,6 +45,14 @@ export default function Navbar() {
                     {savedIds.size}
                   </span>
                 )}
+              </span>
+            </NavLink>
+          )}
+          {isLoggedIn && (
+            <NavLink to="/my-submissions" className={linkClass}>
+              <span className="inline-flex items-center gap-1.5">
+                <FileCheck2 className="size-3.5" />
+                My submissions
               </span>
             </NavLink>
           )}

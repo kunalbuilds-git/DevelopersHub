@@ -5,6 +5,7 @@ import com.developershub.backend.entity.OpportunityLevel;
 import com.developershub.backend.entity.OpportunityStatus;
 import com.developershub.backend.entity.OpportunityType;
 import com.developershub.backend.entity.Tag;
+import com.developershub.backend.entity.User;
 import com.developershub.backend.repository.OpportunityRepository;
 import com.developershub.backend.repository.TagRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +17,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
 import static com.developershub.backend.specification.OpportunitySpecifications.hasLevel;
+import static com.developershub.backend.specification.OpportunitySpecifications.hasNotExpired;
 import static com.developershub.backend.specification.OpportunitySpecifications.hasStatus;
+import static com.developershub.backend.specification.OpportunitySpecifications.hasSubmittedBy;
 import static com.developershub.backend.specification.OpportunitySpecifications.hasType;
 import static com.developershub.backend.specification.OpportunitySpecifications.hasTag;
 import static com.developershub.backend.specification.OpportunitySpecifications.hasKeyword;
@@ -39,13 +43,27 @@ public class OpportunityService {
     }
 
     /** Public listing: only curated (APPROVED) opportunities are visible. */
-    public Page<Opportunity> findAll(OpportunityType type, OpportunityLevel level, String tag, String keyword, Pageable pageable) {
+    public Page<Opportunity> findAll(OpportunityType type, OpportunityLevel level, String tag, String keyword,
+                                     boolean includeExpired, Pageable pageable) {
         Specification<Opportunity> spec = Specification
                 .where(hasStatus(OpportunityStatus.APPROVED))
                 .and(hasType(type))
                 .and(hasLevel(level))
                 .and(hasTag(tag))
                 .and(hasKeyword(keyword));
+        if (!includeExpired) {
+            spec = spec.and(hasNotExpired(LocalDateTime.now()));
+        }
+        return repository.findAll(spec, pageable);
+    }
+
+    /**
+     * A user's own submissions, newest first. Never exposes anyone else's.
+     */
+    public Page<Opportunity> findMySubmissions(User user, OpportunityStatus status, Pageable pageable) {
+        Specification<Opportunity> spec = Specification
+                .where(hasSubmittedBy(user.getId()))
+                .and(hasStatus(status));
         return repository.findAll(spec, pageable);
     }
 
@@ -69,8 +87,9 @@ public class OpportunityService {
     }
 
     /** User submissions wait as PENDING until an admin reviews them. */
-    public Opportunity submit(Opportunity opportunity, Set<String> tagNames) {
+    public Opportunity submit(Opportunity opportunity, Set<String> tagNames, User submitter) {
         opportunity.setStatus(OpportunityStatus.PENDING);
+        opportunity.setSubmittedBy(submitter);
         opportunity.setTags(resolveTags(tagNames));
         return repository.save(opportunity);
     }

@@ -4,6 +4,7 @@ import BrowsePage from './pages/BrowsePage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import SavedPage from './pages/SavedPage.jsx'
+import MySubmissionsPage from './pages/MySubmissionsPage.jsx'
 import SubmitPage from './pages/SubmitPage.jsx'
 import ReviewQueuePage from './pages/ReviewQueuePage.jsx'
 import { useAuth } from './auth/AuthContext.jsx'
@@ -34,6 +35,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <SavedPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/my-submissions"
+            element={
+              <RequireAuth>
+                <MySubmissionsPage />
               </RequireAuth>
             }
           />

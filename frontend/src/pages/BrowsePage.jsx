@@ -33,6 +33,7 @@ export default function BrowsePage() {
   const type = searchParams.get('type') || ''
   const level = searchParams.get('level') || ''
   const tag = searchParams.get('tag') || ''
+  const includeExpired = searchParams.get('includeExpired') === 'true'
   const page = Math.max(0, parseInt(searchParams.get('page') || '0', 10) || 0)
 
   const [keywordInput, setKeywordInput] = useState(keyword)
@@ -63,6 +64,7 @@ export default function BrowsePage() {
     if (type) params.set('type', type)
     if (level) params.set('level', level)
     if (tag) params.set('tag', tag)
+    if (includeExpired) params.set('includeExpired', 'true')
     api(`/opportunities?${params.toString()}`, { auth: false })
       .then((data) => {
         if (!cancelled) setResult(data)
@@ -76,7 +78,7 @@ export default function BrowsePage() {
     return () => {
       cancelled = true
     }
-  }, [page, keyword, type, level, tag])
+  }, [page, keyword, type, level, tag, includeExpired])
 
   const content = result?.content || []
   const pageNumber = result ? (result.page ?? result.number ?? 0) : 0
@@ -179,6 +181,30 @@ export default function BrowsePage() {
               aria-label="Filter by tag"
             />
           </div>
+
+          <button
+            type="button"
+            onClick={() => updateParams({ includeExpired: includeExpired ? '' : 'true', page: '' })}
+            className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
+              includeExpired
+                ? 'border-accent-400/40 bg-accent-500/15 text-accent-300'
+                : 'border-white/10 bg-white/5 text-slate-400 hover:text-slate-200'
+            }`}
+            title="Past-deadline opportunities are hidden by default"
+          >
+            <span
+              className={`relative h-4 w-7 rounded-full transition ${
+                includeExpired ? 'bg-accent-500' : 'bg-white/15'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 size-3 rounded-full bg-white transition-all ${
+                  includeExpired ? 'left-3.5' : 'left-0.5'
+                }`}
+              />
+            </span>
+            Show expired
+          </button>
 
           {hasFilters && (
             <button
