@@ -22,6 +22,7 @@ export function useScrollStory(rootRef, savedCountRef) {
     if (!root) return
 
     const q = (sel) => root.querySelector(sel)
+    const qa = (sel) => Array.from(root.querySelectorAll(sel))
 
     const story = q('.landing-story')
     const cam = q('.landing-cam')
@@ -37,6 +38,34 @@ export function useScrollStory(rootRef, savedCountRef) {
     const hud = q('.landing-hud')
     const caption = q('.landing-caption')
     const hint = q('.landing-hint')
+    const fog = q('.landing-fog')
+    const l2 = q('.landing-layer--l2')
+    const l3 = q('.landing-layer--l3')
+    const l4 = q('.landing-layer--l4')
+    const visionChip = q('.landing-vision .chip')
+    const visionWords = qa('.landing-vision h2 span')
+    const visionP = q('.landing-vision p')
+    const acct = q('.landing-acct')
+    const acctWords = qa('.landing-acct span')
+    const hotspots = qa('.landing-hotspot')
+    const cred = q('.landing-cred')
+    const card = q('.landing-card')
+    const numberEl = q('.card-number .num')
+    const sparkPolyline = q('.landing-card polyline')
+    const featsRows = qa('.feats-row')
+    const rocks = qa('.landing-rock')
+
+    // Sparkline draw-on length (§11)
+    let sparkLen = 0
+    if (sparkPolyline) {
+      try {
+        sparkLen = sparkPolyline.getTotalLength()
+        sparkPolyline.style.strokeDasharray = String(sparkLen)
+        sparkPolyline.style.strokeDashoffset = String(sparkLen)
+      } catch {
+        sparkLen = 0
+      }
+    }
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -213,6 +242,76 @@ export function useScrollStory(rootRef, savedCountRef) {
       caption.style.opacity = String(1 - seg(sp, 0.01, 0.05))
       hint.style.opacity = String(1 - seg(sp, 0.01, 0.05))
       l1.style.visibility = 1 - seg(sp, 0.02, 0.08) <= 0 ? 'hidden' : 'visible'
+
+      // fog roll-in (§8)
+      const fg = ease(seg(sp, 0.38, 0.47))
+      fog.style.visibility = fg <= 0 ? 'hidden' : 'visible'
+      fog.style.opacity = String(fg)
+      fog.style.transform = `translate3d(${((fg - 1) * 18 - sx * 10).toFixed(2)}vw, ${(-sy * 6).toFixed(2)}px, 0)`
+
+      // vision words (§9)
+      const vIn = seg(sp, 0.16, 0.27)
+      const vOut = seg(sp, 0.34, 0.42)
+      visionWords.forEach((w, i) => {
+        const k = Math.min(1, Math.max(0, vIn * 1.6 - i * 0.08))
+        w.style.transform = `translate3d(0, ${((1 - k) * 30 - vOut * 60).toFixed(2)}px, 0)`
+        w.style.filter = `blur(${((1 - k) * 12 + vOut * 14).toFixed(2)}px)`
+        w.style.opacity = String(k * (1 - vOut))
+      })
+      const vAll = Math.min(1, Math.max(0, vIn * 2 - 0.6)) * (1 - vOut)
+      visionChip.style.opacity = String(vAll)
+      visionChip.style.transform = `translate3d(0, ${(-vOut * 50).toFixed(2)}px, 0)`
+      visionP.style.opacity = String(vAll)
+      visionP.style.transform = `translate3d(0, ${(-vOut * 50).toFixed(2)}px, 0)`
+      l2.style.visibility = vAll <= 0 ? 'hidden' : 'visible'
+
+      // accounting write-in + hotspots (§10)
+      const aIn = seg(sp, 0.45, 0.55)
+      const aOut = seg(sp, 0.63, 0.68)
+      const aCount = acctWords.length
+      acctWords.forEach((w, i) => {
+        const k = Math.min(1, Math.max(0, aIn * 2.2 - (i / aCount) * 1.2))
+        w.style.opacity = String((0.15 + 0.85 * k) * (1 - aOut))
+        w.style.filter = `blur(${((1 - k) * 6 + aOut * 10).toFixed(2)}px)`
+      })
+      hotspots.forEach((hotspot, i) => {
+        const k = seg(sp, 0.49 + i * 0.02, 0.53 + i * 0.02)
+        hotspot.style.visibility = k <= 0 || aOut >= 1 ? 'hidden' : 'visible'
+        hotspot.style.transform = `translate3d(${(-sx * 30).toFixed(2)}px, ${(-sy * 20).toFixed(2)}px, 0) scale(${(k * (1 - aOut)).toFixed(4)})`
+      })
+      l3.style.visibility = aIn <= 0 ? 'hidden' : 'visible'
+
+      // station (§11)
+      const sIn = seg(sp, 0.72, 0.82)
+      cred.style.opacity = String(sIn)
+      cred.style.transform = `translate3d(0, ${((1 - sIn) * 30).toFixed(2)}px, 0)`
+      cred.style.filter = `blur(${((1 - sIn) * 8).toFixed(2)}px)`
+      const cIn = ease(seg(sp, 0.74, 0.86))
+      card.style.opacity = String(cIn)
+      card.style.transform = `translate3d(${(-sx * 14).toFixed(2)}px, ${((1 - cIn) * 60 - sy * 10).toFixed(2)}px, 0) rotateY(${(sx * 8).toFixed(2)}deg) rotateX(${(-sy * 8).toFixed(2)}deg)`
+      const num = Math.round((savedCountRef?.current ?? 0) * seg(sp, 0.76, 0.9))
+      if (numberEl) numberEl.textContent = String(num)
+      if (sparkPolyline && sparkLen) {
+        sparkPolyline.style.strokeDashoffset = String(sparkLen * (1 - seg(sp, 0.77, 0.92)))
+      }
+      featsRows.forEach((row, i) => {
+        const k = ease(seg(sp, 0.76 + i * 0.025, 0.82 + i * 0.025))
+        row.style.opacity = String(k)
+        row.style.transform = `translateX(${((1 - k) * 40).toFixed(2)}px)`
+      })
+      l4.style.visibility = sIn <= 0 ? 'hidden' : 'visible'
+
+      // rock fly-past (§6)
+      rocks.forEach((rock) => {
+        const x = parseFloat(rock.dataset.x)
+        const y = parseFloat(rock.dataset.y)
+        const depth = parseFloat(rock.dataset.depth)
+        const fp = seg(sp, 0.02, 0.2)
+        const fe = fp * fp
+        rock.style.transform = `translate3d(${(x * fp * 70 + -sx * 24 * depth).toFixed(2)}vw, ${(y * fp * 60 + -sy * 16 * depth).toFixed(2)}vh, 0) scale(${(1 + fe * 1.6 * depth).toFixed(4)})`
+        rock.style.filter = `blur(${(fe * 5 * depth).toFixed(2)}px)`
+        rock.style.visibility = fp >= 1 ? 'hidden' : 'visible'
+      })
 
       // progress
       prog.style.transform = `scaleX(${sp.toFixed(4)})`
