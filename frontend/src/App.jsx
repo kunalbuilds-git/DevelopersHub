@@ -27,7 +27,7 @@ function AppShell() {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-5 pb-20">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-5 pb-20 pt-[90px] max-[820px]:pt-[110px]">
         <Routes>
           <Route path="/browse" element={<BrowsePage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -67,13 +67,25 @@ function AppShell() {
           <Route path="*" element={<Navigate to="/browse" replace />} />
         </Routes>
       </main>
-      <footer className="border-t border-white/10 bg-ink-900/50">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-5 py-6 text-sm text-slate-500 sm:flex-row">
+      <footer className="border-t border-[color:var(--line-ink)] bg-paper">
+        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-2 px-5 py-6 font-mono text-[11px] uppercase tracking-[0.14em] text-ink2 sm:flex-row sm:items-center">
           <p>
-            <span className="font-mono font-semibold text-slate-400">DevelopersHub</span> — one place for
-            hackathons, internships, and company events.
+            DevelopersHub — <span className="normal-case tracking-normal">never miss a deadline</span>
           </p>
-          <p className="font-mono text-xs">built by students, for students</p>
+          <p>
+            <a
+              href="https://github.com/kunalbuilds-git/DevelopersHub"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors duration-150 hover:text-lime2"
+            >
+              GitHub
+            </a>
+            <span aria-hidden="true" className="mx-2">
+              ·
+            </span>
+            Built by Kunal
+          </p>
         </div>
       </footer>
     </div>
