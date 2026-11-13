@@ -6,6 +6,7 @@ import GlassPanel from '../../components/ui/GlassPanel.jsx'
 import { api } from '../../api/client.js'
 import { useAuth } from '../../auth/AuthContext.jsx'
 import { HAS_DEADLINE_SORT } from './constants'
+import { useScrollStory } from './useScrollStory'
 import './landing.css'
 
 /** §10 hotspots — positions relative to the stage, values link to filtered browse. */
@@ -35,6 +36,8 @@ export default function LandingPage() {
   const heroCopyRef = useRef(null)
   const heroLineRef = useRef(null)
   const storyRef = useRef(null)
+  const savedCountRef = useRef(0)
+  useScrollStory(storyRef, savedCountRef)
   const camRef = useRef(null)
   const camFRef = useRef(null)
   const canvasRef = useRef(null)
@@ -109,6 +112,9 @@ export default function LandingPage() {
   const buckets = weekly.buckets
   const thisWeek = weekly.thisWeek
   const savedCount = savedList?.length ?? 0
+  useEffect(() => {
+    savedCountRef.current = savedCount
+  }, [savedCount])
   const hasSaved = savedCount > 0
   const maxBucket = Math.max(1, ...buckets)
   const sparkPoints = buckets
@@ -273,7 +279,7 @@ export default function LandingPage() {
                 <h4>Saved opportunities</h4>
                 <p className="card-note">Next 8 weeks</p>
                 <div className="card-number">
-                  {savedCount} <span className="card-unit">saved</span>
+                  <span className="num">{savedCount}</span> <span className="card-unit">saved</span>
                 </div>
                 {thisWeek > 0 && <span className="chip lime-tag">+{thisWeek} this week</span>}
                 {hasSaved ? (
