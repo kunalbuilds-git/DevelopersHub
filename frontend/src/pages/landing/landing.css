@@ -581,3 +581,149 @@
 .feats-row.on .arrow {
   transform: translateX(4px);
 }
+
+/* -- Solutions panel (§13, DevelopersHub content) ------------------------------ */
+.landing-sol {
+  position: relative;
+  z-index: 5;
+  margin-top: -30vh;
+  background: #ffffff;
+  border-radius: 22px 22px 0 0;
+  padding: 70px 34px 90px;
+  box-shadow: 0 -30px 60px rgba(16, 41, 26, 0.12);
+}
+.sol-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+.sol-head h2 {
+  font-weight: 500;
+  font-size: clamp(34px, 3.9vw, 58px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  max-width: 640px;
+  margin-top: 20px;
+  color: var(--ink);
+}
+.sol-head p {
+  font-size: 15px;
+  max-width: 360px;
+  color: #4a5a4f;
+  margin: 0;
+}
+.sol-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 54px;
+}
+.sol-card {
+  position: relative;
+  height: 440px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1b3122;
+  color: #ffffff;
+}
+.sol-card-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sol-card:hover .sol-card-bg {
+  transform: scale(1.07);
+}
+.sol-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 25, 15, 0.45), transparent 35%, transparent 55%, rgba(10, 25, 15, 0.75));
+}
+.sol-card-top {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.sol-card-top .mono {
+  opacity: 0.85;
+}
+.sol-card-arrow {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--lime);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  transition: transform 0.3s ease;
+}
+.sol-card:hover .sol-card-arrow {
+  transform: rotate(-45deg);
+}
+.sol-card-bottom {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+}
+.sol-card-bottom h3 {
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin: 0;
+}
+.sol-card-bottom p {
+  font-size: 13.5px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.6s ease;
+  margin: 6px 0 0;
+}
+.sol-card:hover .sol-card-bottom p {
+  max-height: 80px;
+}
+.sol-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 60px;
+  border-top: 1px solid #e0e5e0;
+}
+.sol-stat {
+  padding-top: 22px;
+}
+.sol-stat .num {
+  font-size: 44px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  display: block;
+  color: var(--ink);
+}
+.sol-stat .label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6a7a6f;
+}
+.sol-cta {
+  text-align: center;
+  margin-top: 54px;
+}
+.sol-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--lime);
+  color: var(--ink);
+  padding: 14px 22px;
+  border-radius: 6px;
+  font-weight: 600;
+}

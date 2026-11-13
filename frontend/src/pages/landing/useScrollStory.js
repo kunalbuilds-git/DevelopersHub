@@ -6,7 +6,7 @@ const FPS = 24
 function seg(p, a, b) {
   return Math.min(1, Math.max(0, (p - a) / (b - a)))
 }
-function ease(t) {
+export function ease(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 }
 
@@ -45,7 +45,6 @@ export function useScrollStory(rootRef, savedCountRef) {
     const visionChip = q('.landing-vision .chip')
     const visionWords = qa('.landing-vision h2 span')
     const visionP = q('.landing-vision p')
-    const acct = q('.landing-acct')
     const acctWords = qa('.landing-acct span')
     const hotspots = qa('.landing-hotspot')
     const cred = q('.landing-cred')

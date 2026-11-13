@@ -6,7 +6,8 @@ import GlassPanel from '../../components/ui/GlassPanel.jsx'
 import { api } from '../../api/client.js'
 import { useAuth } from '../../auth/AuthContext.jsx'
 import { HAS_DEADLINE_SORT } from './constants'
-import { useScrollStory } from './useScrollStory'
+import { ease, useScrollStory } from './useScrollStory'
+import { OPPORTUNITY_TYPES } from '../../components/TypeBadge.jsx'
 import './landing.css'
 
 /** §10 hotspots — positions relative to the stage, values link to filtered browse. */
@@ -25,6 +26,36 @@ const FEATURES = [
   { n: '05', label: 'Submit an opportunity for review', to: '/submit' },
 ]
 
+const SOLUTION_CARDS = [
+  {
+    label: 'Hackathons',
+    title: ['Build something', 'with a deadline'],
+    body: 'Find hackathons you can enter as a beginner and see when registration closes.',
+    to: '/browse?type=HACKATHON',
+    img: '/landing/mast.webp',
+    pos: '22% 70%',
+    size: '260%',
+  },
+  {
+    label: 'Internships',
+    title: ['Your first', 'real experience'],
+    body: 'Internships and company programs filtered by level, so first-years see what they can actually apply to.',
+    to: '/browse?type=INTERNSHIP',
+    img: '/landing/island.webp',
+    pos: '50% 50%',
+    size: '190%',
+  },
+  {
+    label: 'Open source and programs',
+    title: ['Contribute', 'early'],
+    body: 'GSoC-style programs and beginner-friendly open source, with timelines you can plan around.',
+    to: '/browse?type=OPEN_SOURCE',
+    img: '/landing/mast.webp',
+    pos: '62% 30%',
+    size: '230%',
+  },
+]
+
 const ACCOUNTING_TEXT =
   'Every listing shows what it is, who it is for and when it closes, so you can apply early and stop scrambling the night before the deadline.'
 
@@ -38,6 +69,9 @@ export default function LandingPage() {
   const storyRef = useRef(null)
   const savedCountRef = useRef(0)
   useScrollStory(storyRef, savedCountRef)
+  const solStatsRef = useRef(null)
+  const statNumRefs = useRef([null, null, null])
+  const countedRef = useRef(false)
   const camRef = useRef(null)
   const camFRef = useRef(null)
   const canvasRef = useRef(null)
@@ -107,6 +141,41 @@ export default function LandingPage() {
       document.fonts.ready.then(layout)
     }
     return () => window.removeEventListener('resize', layout)
+  }, [])
+
+  // §13 stats — live totals from the API, counted up once on first view
+  useEffect(() => {
+    const onScroll = () => {
+      if (countedRef.current || !solStatsRef.current) return
+      if (solStatsRef.current.getBoundingClientRect().top > window.innerHeight * 0.6) return
+      countedRef.current = true
+      window.removeEventListener('scroll', onScroll)
+      Promise.allSettled([
+        api('/opportunities?size=1&includeExpired=true'),
+        api('/opportunities?size=1'),
+      ]).then(([allResult, openResult]) => {
+        const targets = [
+          allResult.status === 'fulfilled' ? allResult.value.totalElements : null,
+          openResult.status === 'fulfilled' ? openResult.value.totalElements : null,
+          OPPORTUNITY_TYPES.length,
+        ]
+        const start = performance.now()
+        const tick = (now) => {
+          const t = Math.min(1, (now - start) / 1600)
+          const e = ease(t)
+          targets.forEach((target, i) => {
+            const el = statNumRefs.current[i]
+            if (!el) return
+            el.textContent = target == null ? '—' : Math.round(target * e).toLocaleString('en-IN')
+          })
+          if (t < 1) requestAnimationFrame(tick)
+        }
+        requestAnimationFrame(tick)
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
   const buckets = weekly.buckets
@@ -320,7 +389,78 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* The solutions panel (§13) lands in step 6 */}
+        {/* Solutions panel (§13) */}
+        <section className="landing-sol">
+          <div className="sol-head">
+            <div>
+              <Chip>What you can do</Chip>
+              <h2>Find the right thing, then apply on time</h2>
+            </div>
+            <p>
+              Search by type, level and tag, save what you care about, and see exactly how long you
+              have left. Spotted something we are missing? Submit it and we will review it.
+            </p>
+          </div>
+
+          <div className="sol-cards">
+            {SOLUTION_CARDS.map((card) => (
+              <Link
+                key={card.label}
+                to={card.to}
+                className="sol-card"
+                onPointerMove={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect()
+                  const x = (event.clientX - rect.left) / rect.width - 0.5
+                  const y = (event.clientY - rect.top) / rect.height - 0.5
+                  event.currentTarget.style.transform = `perspective(1000px) rotateY(${(x * 6).toFixed(2)}deg) rotateX(${(-y * 6).toFixed(2)}deg)`
+                }}
+                onPointerLeave={(event) => {
+                  event.currentTarget.style.transform = ''
+                }}
+              >
+                <div
+                  className="sol-card-bg"
+                  style={{ backgroundImage: `url(${card.img})`, backgroundPosition: card.pos, backgroundSize: card.size }}
+                />
+                <div className="sol-card-overlay" aria-hidden="true" />
+                <div className="sol-card-top">
+                  <span className="mono">[{card.label}]</span>
+                  <span className="sol-card-arrow" aria-hidden="true">→</span>
+                </div>
+                <div className="sol-card-bottom">
+                  <h3>
+                    {card.title[0]}
+                    <br />
+                    {card.title[1]}
+                  </h3>
+                  <p>{card.body}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="sol-stats" ref={solStatsRef}>
+            <div className="sol-stat">
+              <span className="num" ref={(el) => (statNumRefs.current[0] = el)}>—</span>
+              <span className="label">Opportunities listed</span>
+            </div>
+            <div className="sol-stat">
+              <span className="num" ref={(el) => (statNumRefs.current[1] = el)}>—</span>
+              <span className="label">Open right now</span>
+            </div>
+            <div className="sol-stat">
+              <span className="num" ref={(el) => (statNumRefs.current[2] = el)}>—</span>
+              <span className="label">Opportunity types</span>
+            </div>
+          </div>
+
+          <div className="sol-cta">
+            <Link to="/browse" className="sol-cta-btn">
+              Browse all opportunities
+              <span aria-hidden="true">›</span>
+            </Link>
+          </div>
+        </section>
       </main>
     </>
   )
