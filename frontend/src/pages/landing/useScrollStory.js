@@ -24,7 +24,8 @@ export function useScrollStory(rootRef, savedCountRef) {
     const q = (sel) => root.querySelector(sel)
     const qa = (sel) => Array.from(root.querySelectorAll(sel))
 
-    const story = q('.landing-story')
+    // The root element IS the story container.
+    const story = root
     const cam = q('.landing-cam')
     const camF = q('.landing-camF')
     const plate = q('.landing-cam .plate')
@@ -127,6 +128,8 @@ export function useScrollStory(rootRef, savedCountRef) {
 
     const setupVideo = () => {
       if (stopped || reduced) return
+      // React 19 sets muted as a property which load()/re-mounts reset — keep it true.
+      video.muted = true
       NF = Math.max(2, Math.round(video.duration * FPS))
       frames.length = NF
       // Frame 0 first — the hero hand-off depends on it.
@@ -326,9 +329,10 @@ export function useScrollStory(rootRef, savedCountRef) {
       window.removeEventListener('resize', sizeCanvas)
       window.removeEventListener('pointermove', onPointer)
       if (seekHandler) video.removeEventListener('seeked', seekHandler)
+      // NOTE: do not remove the video src here — under StrictMode's
+      // mount->cleanup->remount React would never re-apply unchanged props
+      // and the video would lose its source permanently.
       video.pause()
-      video.removeAttribute('src')
-      video.load()
       liveBitmaps.forEach((b) => b.close())
       liveBitmaps.clear()
     }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../../components/Navbar.jsx'
 import Chip from '../../components/ui/Chip.jsx'
@@ -311,8 +311,11 @@ export default function LandingPage() {
             {/* L3 — accounting + hotspots (§10) */}
             <div className="landing-layer landing-layer--l3">
               <p className="landing-acct">
-                {ACCOUNTING_TEXT.split(' ').map((word, i) => (
-                  <span key={i}>{word} </span>
+                {ACCOUNTING_TEXT.split(' ').map((word, i, words) => (
+                  <Fragment key={i}>
+                    <span>{word}</span>
+                    {i < words.length - 1 ? ' ' : null}
+                  </Fragment>
                 ))}
               </p>
               {HOTSPOTS.map((hotspot, i) => (
