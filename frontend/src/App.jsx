@@ -7,6 +7,7 @@ import SavedPage from './pages/SavedPage.jsx'
 import MySubmissionsPage from './pages/MySubmissionsPage.jsx'
 import SubmitPage from './pages/SubmitPage.jsx'
 import ReviewQueuePage from './pages/ReviewQueuePage.jsx'
+import LandingPage from './pages/landing/LandingPage.jsx'
 import { useAuth } from './auth/AuthContext.jsx'
 
 function RequireAuth({ children, admin = false }) {
@@ -16,18 +17,19 @@ function RequireAuth({ children, admin = false }) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />
   }
   if (admin && !isAdmin) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/browse" replace />
   }
   return children
 }
 
-export default function App() {
+/** Shared shell for the app pages — the landing route sits outside it. */
+function AppShell() {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 pb-20">
         <Routes>
-          <Route path="/" element={<BrowsePage />} />
+          <Route path="/browse" element={<BrowsePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route
@@ -62,7 +64,7 @@ export default function App() {
               </RequireAuth>
             }
           />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/browse" replace />} />
         </Routes>
       </main>
       <footer className="border-t border-white/10 bg-ink-900/50">
@@ -75,5 +77,15 @@ export default function App() {
         </div>
       </footer>
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <Routes>
+      {/* Landing: full-viewport pinned story, outside the app shell */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="*" element={<AppShell />} />
+    </Routes>
   )
 }
