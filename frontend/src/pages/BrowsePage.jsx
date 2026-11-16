@@ -86,29 +86,12 @@ export default function BrowsePage() {
 
   return (
     <section>
-      {/* Hero */}
-      <div className="relative overflow-hidden">
-        <div className="grid-bg pointer-events-none absolute inset-0" />
-        <div className="pointer-events-none absolute -top-24 left-1/4 size-72 animate-float rounded-full bg-accent-600/20 blur-3xl" />
-        <div className="pointer-events-none absolute -top-10 right-10 size-56 animate-pulse-slow rounded-full bg-fuchsia-glow/10 blur-3xl" />
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="relative py-12 text-center"
-        >
-          <p className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1 font-mono text-xs text-accent-300">
-            <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
-            built for student developers
-          </p>
-          <h1 className="mx-auto max-w-2xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-            Never miss a <span className="text-gradient">deadline</span> again.
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-balance text-[0.98rem] leading-relaxed text-slate-400">
-            Hackathons, internships, company events, and beginner-friendly open source —
-            searchable, filterable by level, and saved in one place.
-          </p>
-        </motion.div>
+      {/* Compact heading — the landing page does the hero job now */}
+      <div className="pt-10">
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Browse opportunities</h1>
+        <p className="mt-1 text-sm text-ink2">
+          Hackathons, internships, programs and events — one searchable place.
+        </p>
       </div>
 
       {/* Filters */}
@@ -158,7 +141,13 @@ export default function BrowsePage() {
             )
           })}
 
-          <div className="relative ml-auto min-w-52 flex-1">
+          <form
+            className="relative ml-auto min-w-52 flex-1"
+            onSubmit={(event) => {
+              event.preventDefault()
+              updateParams({ keyword: keywordInput.trim(), page: '' })
+            }}
+          >
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
             <input
               className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-slate-200 placeholder:text-slate-500 focus:border-accent-400/50 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
@@ -168,7 +157,7 @@ export default function BrowsePage() {
               onChange={(event) => setKeywordInput(event.target.value)}
               aria-label="Search opportunities"
             />
-          </div>
+          </form>
 
           <div className="relative">
             <Tag className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-500" />
