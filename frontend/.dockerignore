@@ -1,0 +1,9 @@
+# The image installs its own dependencies; copying the host ones would ship
+# binaries built for the wrong platform.
+node_modules
+dist
+coverage
+.vite
+.git
+.gitignore
+*.log

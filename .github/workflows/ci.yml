@@ -1,11 +1,12 @@
 name: CI
 
 on:
-  # Runs for pull requests against any base branch, so stacked PRs are
-  # checked too, not just PRs targeting main.
   pull_request:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
 
 permissions:
   contents: read
@@ -14,10 +15,58 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-jobs:
-  backend:
-    runs-on: ubuntu-latest
+env:
+  MAVEN_ARGS: -B --no-transfer-progress
 
+jobs:
+  # ---------------------------------------------------------------------------
+  # Backend, tier 1: fast unit tests. Plain JUnit + Mockito, no Spring context
+  # and no database, so this job needs no service container and gives the
+  # quickest signal on a broken pull request.
+  # ---------------------------------------------------------------------------
+  backend-unit:
+    name: Backend / unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Run unit tests
+        run: ./mvnw $MAVEN_ARGS test
+
+      - name: Build the unit-test coverage report
+        run: ./mvnw $MAVEN_ARGS jacoco:report
+
+      - name: Upload the unit coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-unit
+          path: backend/target/site/jacoco
+          retention-days: 14
+
+  # ---------------------------------------------------------------------------
+  # Backend, tier 2: integration tests. These boot the real application against
+  # PostgreSQL, so `mvn verify` runs both tiers and enforces the coverage floor.
+  # ---------------------------------------------------------------------------
+  backend-integration:
+    name: Backend / integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
     services:
       postgres:
         image: postgres:16
@@ -32,7 +81,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -43,18 +91,39 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+          cache-dependency-path: backend/pom.xml
 
-      - name: Run tests
-        working-directory: backend
-        run: ./mvnw -B verify
+      - name: Run the full verify (unit + integration + coverage gate)
+        run: ./mvnw $MAVEN_ARGS verify
 
+      - name: Upload the test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: |
+            backend/target/surefire-reports
+            backend/target/failsafe-reports
+          retention-days: 14
+
+      - name: Upload the coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage
+          path: backend/target/site/jacoco
+          retention-days: 14
+
+  # ---------------------------------------------------------------------------
+  # Frontend: lint, unit tests with coverage, then a production build.
+  # ---------------------------------------------------------------------------
   frontend:
+    name: Frontend / lint, unit tests, build
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -69,24 +138,116 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint -- --max-warnings 0
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
       - name: Build
         run: npm run build
 
-  docker:
-    runs-on: ubuntu-latest
+      - name: Upload the frontend coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+          retention-days: 14
 
+  # ---------------------------------------------------------------------------
+  # Containers: both images must build, and the compose file must stay valid.
+  # ---------------------------------------------------------------------------
+  docker:
+    name: Docker / image build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build the API image
-        run: docker build -t developershub-api:ci backend
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: false
+          load: true
+          tags: developershub-api:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build the web image
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: false
+          load: true
+          tags: developershub-web:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Check the compose file is valid
         run: docker compose config --quiet
+
+  # ---------------------------------------------------------------------------
+  # Security: scan the working tree for known vulnerabilities and review the
+  # dependency changes a pull request introduces.
+  # ---------------------------------------------------------------------------
+  security:
+    name: Security / dependency scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan the working tree for vulnerabilities
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Review the dependency changes
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+  # ---------------------------------------------------------------------------
+  # A single green job that branch protection can require.
+  # ---------------------------------------------------------------------------
+  ci-result:
+    name: CI
+    if: always()
+    needs:
+      - backend-unit
+      - backend-integration
+      - frontend
+      - docker
+      - security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any job failed
+        run: |
+          echo "Backend unit:       ${{ needs.backend-unit.result }}"
+          echo "Backend integration: ${{ needs.backend-integration.result }}"
+          echo "Frontend:           ${{ needs.frontend.result }}"
+          echo "Docker:             ${{ needs.docker.result }}"
+          echo "Security:           ${{ needs.security.result }}"
+          [ "${{ needs.backend-unit.result }}" = "success" ] &&
+          [ "${{ needs.backend-integration.result }}" = "success" ] &&
+          [ "${{ needs.frontend.result }}" = "success" ] &&
+          [ "${{ needs.docker.result }}" = "success" ] &&
+          [ "${{ needs.security.result }}" = "success" ]
