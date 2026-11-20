@@ -7,6 +7,10 @@ target/
 dist/
 node_modules/
 
+# Test and coverage reports
+coverage/
+frontend/coverage/
+
 # Editor / OS noise
 .idea/
 .vscode/
