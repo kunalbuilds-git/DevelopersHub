@@ -10,7 +10,7 @@ COPY src ./src
 RUN mvn -B -q clean package -DskipTests
 
 # --- runtime stage -----------------------------------------------------------
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:22-jre-jammy
 WORKDIR /app
 
 # curl is used by the container healthcheck against /actuator/health.
