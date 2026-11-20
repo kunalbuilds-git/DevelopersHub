@@ -12,7 +12,7 @@ A developer-focused platform for discovering resources, projects, tools, and opp
 ![CI](https://github.com/kunalbuilds-git/DevelopersHub/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-[About](#about) | [Features](#features) | [Architecture](#architecture) | [Tech Stack](#tech-stack) | [Local development](#local-development) | [API](#api-overview) | [Errors](#errors) | [Example](#example) | [Web frontend](#web-frontend)
+[About](#about) | [Features](#features) | [Architecture](#architecture) | [Tech Stack](#tech-stack) | [Local development](#local-development) | [Tests](#tests) | [CI/CD](#cicd) | [API](#api-overview) | [Errors](#errors) | [Example](#example) | [Web frontend](#web-frontend)
 
 </div>
 
@@ -22,7 +22,7 @@ A developer-focused platform for discovering resources, projects, tools, and opp
 
 Student developers juggle hackathons, internships, GSoC-style programs, and beginner-friendly open-source issues scattered across a dozen different sites. DevelopersHub brings them into one searchable, filterable, personal place. It is built both as a real tool and as a hands-on, full-stack learning project — the scope notes and early prototypes live in [`docs/`](docs).
 
-> **The backend core and the web frontend are both live.** Opportunities with tagging, search, and expiry handling; user submissions with an admin review queue; bookmarks; JWT auth with rotating refresh tokens and rate limiting; a React app with a landing page and the full browse / save / submit / review flows — all running as a Dockerized stack, with CI on every pull request.
+> **The backend core and the web frontend are both live.** Opportunities with tagging, search, and expiry handling; user submissions with an admin review queue; bookmarks; JWT auth with rotating refresh tokens and rate limiting; a React app with a landing page and the full browse / save / submit / review flows — all running as a Dockerized stack, with CI on every pull request and CD on every release tag.
 
 ---
 
@@ -51,7 +51,7 @@ Student developers juggle hackathons, internships, GSoC-style programs, and begi
 - Versioned schema migrations with Flyway, plus indexes on the filtered columns
 - RFC 7807 ProblemDetail error responses for validation, conflicts, and bad input
 - Dockerized PostgreSQL for local development
-- Continuous integration on GitHub Actions: the backend test suite, the frontend build, and the container build run on every pull request and every push to main
+- Continuous integration on GitHub Actions: backend unit and integration tests, frontend lint and tests, container builds, and security scans run on every pull request and every push to main
 
 ### Planned next
 
@@ -93,7 +93,7 @@ A layered Spring Boot backend (**Controller → Service → Repository**) with d
 | Build tool | Maven |
 | Local dev | Docker Compose |
 | Frontend | React 19 + Vite + React Router + Tailwind CSS + Framer Motion |
-| Tests | JUnit + Mockito + AssertJ (backend) |
+| Tests | JUnit + Mockito + AssertJ (backend) · Vitest + React Testing Library (frontend) |
 | CI | GitHub Actions |
 
 ---
@@ -203,7 +203,7 @@ Every workflow lives in `.github/workflows/`.
 |---|---|---|
 | `ci.yml` | Every pull request and every push to `main` | Backend unit tests, backend integration tests, frontend lint + unit tests + build, Docker image builds, and a dependency scan. Ends with a single `CI` job that branch protection can require. |
 | `codeql.yml` | Pull requests, pushes to `main`, and weekly | Static analysis of the Java backend and the JavaScript frontend. |
-| `release.yml` | A `v*` tag, or manual dispatch | Re-runs the full verification, publishes the API and web images to GitHub Container Registry, and opens a GitHub release with the generated notes. |
+| `release.yml` | A `v*` tag | Re-runs the full verification, publishes the API and web images to GitHub Container Registry, and opens a GitHub release with the generated notes. |
 
 The CI pipeline fans out into independent jobs so one failing area does not hide the rest:
 
