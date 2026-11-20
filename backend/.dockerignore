@@ -1,0 +1,7 @@
+# Build output and local tooling must never enter the image.
+target/
+.git/
+.gitignore
+.idea/
+*.iml
+*.log

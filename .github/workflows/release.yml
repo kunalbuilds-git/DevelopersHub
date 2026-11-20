@@ -1,0 +1,166 @@
+name: Release
+
+# Continuous delivery: a tag re-verifies the commit, publishes the built
+# images to GitHub Container Registry, and opens a GitHub release for the tag.
+on:
+  push:
+    tags: [ 'v*' ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # The release is only cut from a commit that actually passes the suite.
+  # ---------------------------------------------------------------------------
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: developershub
+          POSTGRES_USER: devuser
+          POSTGRES_PASSWORD: devpass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Run the full verify (unit + integration + coverage gate)
+        run: ./mvnw -B --no-transfer-progress verify
+
+      - name: Upload the coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-coverage
+          path: backend/target/site/jacoco
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Publish both images to GHCR. Each image gets its own metadata step, since
+  # one step with two `images` entries would tag both builds with both names.
+  # ---------------------------------------------------------------------------
+  publish:
+    name: Publish images
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute the API image tags
+        id: meta-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}-api
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=long
+            type=raw,value=latest
+
+      - name: Compute the web image tags
+        id: meta-web
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}-web
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=long
+            type=raw,value=latest
+
+      - name: Build and push the API image
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push the web image
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: true
+          tags: ${{ steps.meta-web.outputs.tags }}
+          labels: ${{ steps.meta-web.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Describe the published images
+        run: |
+          {
+            echo "### Published images"
+            echo
+            echo '```'
+            echo "${{ steps.meta-api.outputs.tags }}"
+            echo "${{ steps.meta-web.outputs.tags }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # Open the GitHub release for the tag, with the coverage report attached.
+  # ---------------------------------------------------------------------------
+  release:
+    name: GitHub release
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Download the coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: release-coverage
+          path: coverage
+
+      - name: Bundle the coverage report
+        run: zip -r "developershub-coverage-${{ github.ref_name }}.zip" coverage
+
+      - name: Create the release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: developershub-coverage-${{ github.ref_name }}.zip

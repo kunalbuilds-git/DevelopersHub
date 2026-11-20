@@ -103,9 +103,11 @@ docker compose up --build
 ```
 
 That builds the API image, starts PostgreSQL, waits for the database to become
-healthy, and starts the API on `http://localhost:8080`. Configuration comes from
-the environment — copy `.env.example` to `.env` and adjust it (`.env` is
-git-ignored; no secrets are committed).
+healthy, and starts the API on `http://localhost:8080`. It also builds the
+frontend and serves it through nginx on `http://localhost:3000`, with `/api`
+proxied to the API so the browser only ever talks to one origin.
+Configuration comes from the environment — copy `.env.example` to `.env` and
+adjust it (`.env` is git-ignored; no secrets are committed).
 
 ```bash
 cp .env.example .env
@@ -153,12 +155,79 @@ The API listens on `http://localhost:8080`. Configuration is environment-driven,
 
 ### Tests
 
+The suite is split into two tiers, and the file name decides which one a test belongs to.
+
+| Tier | File naming | Runs with | Needs a database? | What it covers |
+|---|---|---|---|---|
+| Unit | `*Test.java` | `./mvnw test` | No | Individual classes in isolation, with Mockito for the collaborators. Pure JUnit — no Spring context, no container, no network. |
+| Integration | `*Tests.java` | `./mvnw verify` | Yes | The real application over HTTP against PostgreSQL. |
+
 ```bash
+# Unit tier only - fast, and needs nothing running.
 cd backend
 ./mvnw test
+
+# Everything: unit tests, integration tests, and the coverage gate.
+docker compose up -d db
+./mvnw verify
 ```
 
-Tests run against a dedicated `developershub_test` database, which is created automatically, so local development data is never touched. The suite covers authentication, role-based access, opportunity CRUD and filtering, bookmarks, JWT handling, health and OpenAPI endpoints, expiry filtering, and per-user submission isolation.
+Integration tests run against a dedicated `developershub_test` database, which is created automatically, so local development data is never touched. That tier covers authentication, role-based access, opportunity CRUD and filtering, bookmarks, JWT handling, health and OpenAPI endpoints, expiry filtering, and per-user submission isolation.
+
+The unit tier covers the service layer (registration, login, refresh rotation, admin bootstrap, bookmark rules, opportunity status transitions), the security layer (token signing and parsing, the sliding-window rate limiter), request validation, error mapping, and the response DTOs.
+
+Coverage is measured with JaCoCo. `./mvnw verify` produces an HTML report at `backend/target/site/jacoco/index.html` and fails the build if bundle-wide line coverage drops below the configured floor.
+
+### Frontend tests
+
+```bash
+cd frontend
+npm test              # single run
+npm run test:watch    # watch mode
+npm run test:coverage # with the coverage report
+```
+
+Frontend tests use Vitest with React Testing Library in a jsdom environment. They cover the API client (token handling, error mapping, the refresh-and-retry path) and the presentational components.
+
+---
+
+## CI/CD
+
+Every workflow lives in `.github/workflows/`.
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `ci.yml` | Every pull request and every push to `main` | Backend unit tests, backend integration tests, frontend lint + unit tests + build, Docker image builds, and a dependency scan. Ends with a single `CI` job that branch protection can require. |
+| `codeql.yml` | Pull requests, pushes to `main`, and weekly | Static analysis of the Java backend and the JavaScript frontend. |
+| `release.yml` | A `v*` tag, or manual dispatch | Re-runs the full verification, publishes the API and web images to GitHub Container Registry, and opens a GitHub release with the generated notes. |
+
+The CI pipeline fans out into independent jobs so one failing area does not hide the rest:
+
+- **Backend / unit tests** — no service container, so it starts immediately and gives the fastest signal.
+- **Backend / integration tests** — runs against a PostgreSQL service container and enforces the coverage floor.
+- **Frontend** — lint (warnings are errors here), unit tests, coverage, then a production build.
+- **Docker** — builds both images and validates the compose file.
+- **Security** — Trivy scans the working tree for known vulnerabilities, and the dependency-review action checks what a pull request changes.
+
+Pull requests and pushes to `main` are cancelled and restarted when a newer commit arrives, so a queue of stale runs never blocks the branch.
+
+Images published by `release.yml` are tagged with the semantic version, the major-minor version, the full commit SHA, and `latest`.
+
+### Publishing a release
+
+```bash
+git tag v0.4.0
+git push origin v0.4.0
+```
+
+That triggers `release.yml`, which verifies the commit, publishes `ghcr.io/kunalbuilds-git/developershub-api` and `ghcr.io/kunalbuilds-git/developershub-web`, and opens the release. Pull the images with:
+
+```bash
+docker pull ghcr.io/kunalbuilds-git/developershub-api:v0.4.0
+docker pull ghcr.io/kunalbuilds-git/developershub-web:v0.4.0
+```
+
+Dependabot watches the Maven, npm, Docker, and GitHub Actions dependencies and opens grouped pull requests for each.
 
 ---
 

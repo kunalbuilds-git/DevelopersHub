@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JwtUtilTest {
@@ -54,5 +56,70 @@ class JwtUtilTest {
         String token = jwtUtil.generateToken("user@test.dev", "USER");
 
         assertTrue(jwtUtil.parseToken(token).isPresent());
+    }
+
+    @Test
+    void nullSecretFallsBackToEphemeralKey() {
+        JwtUtil jwtUtil = new JwtUtil(null, 60_000);
+        String token = jwtUtil.generateToken("user@test.dev", "USER");
+
+        Optional<Claims> claims = jwtUtil.parseToken(token);
+
+        assertTrue(claims.isPresent());
+        assertEquals("user@test.dev", claims.get().getSubject());
+    }
+
+    @Test
+    void rejectsSecretShorterThan32Bytes() {
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+                () -> new JwtUtil("too-short-secret", 60_000));
+
+        assertNotNull(error.getMessage());
+        assertTrue(error.getMessage().contains("at least 32 bytes"),
+                "expected the minimum key length to be named, but was: " + error.getMessage());
+    }
+
+    @Test
+    void rejectsTokenWithMutatedSignature() {
+        JwtUtil jwtUtil = new JwtUtil(SECRET, 60_000);
+        String token = jwtUtil.generateToken("user@test.dev", "USER");
+        String[] parts = token.split("\\.");
+        // Swap one signature character while keeping the segment length, so the
+        // token is rejected by the signature check rather than by the shape check.
+        int index = parts[2].length() / 2;
+        char replacement = parts[2].charAt(index) == 'A' ? 'B' : 'A';
+        parts[2] = parts[2].substring(0, index) + replacement + parts[2].substring(index + 1);
+
+        assertTrue(jwtUtil.parseToken(String.join(".", parts)).isEmpty());
+    }
+
+    @Test
+    void rejectsTokenWithAppendedTrailingCharacter() {
+        JwtUtil jwtUtil = new JwtUtil(SECRET, 60_000);
+        String token = jwtUtil.generateToken("user@test.dev", "USER");
+
+        assertTrue(jwtUtil.parseToken(token + "A").isEmpty());
+        // The untouched token still parses, so the rejection above is not an artefact.
+        assertTrue(jwtUtil.parseToken(token).isPresent());
+    }
+
+    @Test
+    void rejectsTokenWithWrongSegmentCount() {
+        JwtUtil jwtUtil = new JwtUtil(SECRET, 60_000);
+        String token = jwtUtil.generateToken("user@test.dev", "USER");
+
+        assertTrue(jwtUtil.parseToken(token + ".extra").isEmpty());
+        assertTrue(jwtUtil.parseToken("header.payload").isEmpty());
+    }
+
+    @Test
+    void rejectsMalformedAndBlankTokens() {
+        JwtUtil jwtUtil = new JwtUtil(SECRET, 60_000);
+
+        assertTrue(jwtUtil.parseToken(null).isEmpty());
+        assertTrue(jwtUtil.parseToken("").isEmpty());
+        assertTrue(jwtUtil.parseToken("   ").isEmpty());
+        assertTrue(jwtUtil.parseToken("not-a-jwt").isEmpty());
+        assertTrue(jwtUtil.parseToken("a.b.c").isEmpty());
     }
 }

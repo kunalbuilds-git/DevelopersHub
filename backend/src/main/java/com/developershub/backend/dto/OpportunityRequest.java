@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import com.developershub.backend.entity.Opportunity;
 import com.developershub.backend.entity.OpportunityLevel;
 import com.developershub.backend.entity.OpportunityType;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -44,7 +43,9 @@ public class OpportunityRequest {
     @Schema(description = "Deadline, in ISO-8601 local date-time format")
     private LocalDateTime deadline;
 
-    @Valid
+    // The constraints on the type argument cover each element. Cascading with
+    // @Valid on the field is deprecated for containers and would fail on the
+    // next Hibernate Validator upgrade.
     private Set<@NotBlank @Size(max = 50) String> tags = new HashSet<>();
 
     public Opportunity toOpportunity() {
