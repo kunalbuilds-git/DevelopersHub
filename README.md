@@ -12,7 +12,7 @@ A developer-focused platform for discovering resources, projects, tools, and opp
 ![CI](https://github.com/kunalbuilds-git/DevelopersHub/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-[About](#about) | [Features](#features) | [Architecture](#architecture) | [Tech Stack](#tech-stack) | [Local development](#local-development) | [API](#api-overview) | [Errors](#errors) | [Example](#example)
+[About](#about) | [Features](#features) | [Architecture](#architecture) | [Tech Stack](#tech-stack) | [Local development](#local-development) | [Tests](#tests) | [CI/CD](#cicd) | [API](#api-overview) | [Errors](#errors) | [Example](#example) | [Web frontend](#web-frontend)
 
 </div>
 
@@ -20,9 +20,9 @@ A developer-focused platform for discovering resources, projects, tools, and opp
 
 ## About
 
-Student developers juggle hackathons, internships, GSoC-style programs, and beginner-friendly open-source issues scattered across a dozen different sites. DevelopersHub brings them into one searchable, filterable, personal place. It is built both as a real tool and as a hands-on backend learning project.
+Student developers juggle hackathons, internships, GSoC-style programs, and beginner-friendly open-source issues scattered across a dozen different sites. DevelopersHub brings them into one searchable, filterable, personal place. It is built both as a real tool and as a hands-on, full-stack learning project — the scope notes and early prototypes live in [`docs/`](docs).
 
-> **v0.1 backend core is complete.** Full CRUD, auth, role-based access, tagging, search, bookmarking, and CI, all hand-built and verified end-to-end.
+> **The backend core and the web frontend are both live.** Opportunities with tagging, search, and expiry handling; user submissions with an admin review queue; bookmarks; JWT auth with rotating refresh tokens and rate limiting; a React app with a landing page and the full browse / save / submit / review flows — all running as a Dockerized stack, with CI on every pull request and CD on every release tag.
 
 ---
 
@@ -33,7 +33,7 @@ Student developers juggle hackathons, internships, GSoC-style programs, and begi
 - Full CRUD for opportunities (create, read, update, delete) with request validation and correct HTTP status codes
 - Paginated listing with total count and page metadata (page size capped at 50)
 - Many-to-many tagging (opportunities and tags) through a normalized join table
-- Combined filtering by type, tag, and keyword, built with Spring Data JPA Specifications
+- Combined filtering by type, level, tag, and keyword, built with Spring Data JPA Specifications
 - Case-insensitive keyword search across title and organization, with LIKE wildcards escaped
 - Any user can submit an opportunity; submissions stay hidden until an admin approves or rejects them
 - Bookmark / unbookmark opportunities, with a personal saved list sorted by deadline
@@ -51,12 +51,15 @@ Student developers juggle hackathons, internships, GSoC-style programs, and begi
 - Versioned schema migrations with Flyway, plus indexes on the filtered columns
 - RFC 7807 ProblemDetail error responses for validation, conflicts, and bad input
 - Dockerized PostgreSQL for local development
-- Continuous integration: the test suite runs on every pull request and on pushes to main
+- Continuous integration on GitHub Actions: backend unit and integration tests, frontend lint and tests, container builds, and security scans run on every pull request and every push to main
 
 ### Planned next
 
-- Frontend (web UI)
-- Deployment
+Sketched in [`docs/v1-scope.md`](docs/v1-scope.md):
+
+- Email reminders for opportunities that are closing soon
+- Automatic import of opportunities from the GitHub API
+- Deploying the stack to a real host
 
 ---
 
@@ -64,16 +67,16 @@ Student developers juggle hackathons, internships, GSoC-style programs, and begi
 
 ```mermaid
 flowchart LR
-    Client -->|REST / JSON| Controller
+    SPA["React SPA (Vite)"] -->|"/api through the proxy"| Controller
     Controller --> Service
     Service --> Repository
-    Service --> Spec["Specifications: type / tag / keyword"]
+    Service --> Spec["Specifications: type / level / tag / keyword"]
     Controller -->|JWT| Security["Spring Security + JwtAuthFilter"]
     Repository --> DB[(PostgreSQL)]
     Flyway["Flyway Migrations"] --> DB
 ```
 
-A layered Spring Boot backend (**Controller → Service → Repository**) with dynamic filtering through composable JPA Specifications and stateless JWT-based authentication.
+A layered Spring Boot backend (**Controller → Service → Repository**) with dynamic filtering through composable JPA Specifications and stateless JWT-based authentication. The React SPA never talks to the database or to a second origin — the dev-server proxy (or a reverse proxy in production) forwards `/api` to the API.
 
 ---
 
@@ -89,7 +92,8 @@ A layered Spring Boot backend (**Controller → Service → Repository**) with d
 | Migrations | Flyway |
 | Build tool | Maven |
 | Local dev | Docker Compose |
-| Frontend | React 19 + Vite + React Router |
+| Frontend | React 19 + Vite + React Router + Tailwind CSS + Framer Motion |
+| Tests | JUnit + Mockito + AssertJ (backend) · Vitest + React Testing Library (frontend) |
 | CI | GitHub Actions |
 
 ---
@@ -199,7 +203,7 @@ Every workflow lives in `.github/workflows/`.
 |---|---|---|
 | `ci.yml` | Every pull request and every push to `main` | Backend unit tests, backend integration tests, frontend lint + unit tests + build, Docker image builds, and a dependency scan. Ends with a single `CI` job that branch protection can require. |
 | `codeql.yml` | Pull requests, pushes to `main`, and weekly | Static analysis of the Java backend and the JavaScript frontend. |
-| `release.yml` | A `v*` tag, or manual dispatch | Re-runs the full verification, publishes the API and web images to GitHub Container Registry, and opens a GitHub release with the generated notes. |
+| `release.yml` | A `v*` tag | Re-runs the full verification, publishes the API and web images to GitHub Container Registry, and opens a GitHub release with the generated notes. |
 
 The CI pipeline fans out into independent jobs so one failing area does not hide the rest:
 
@@ -306,7 +310,6 @@ Errors are returned as RFC 7807 ProblemDetail documents:
 | `404` | Opportunity or bookmark does not exist, including pending submissions, which are invisible to non-admins |
 | `409` | Email already registered, opportunity already bookmarked, or a submission reviewed twice |
 | `429` | Rate limit exceeded on register, login, or bootstrap |
-| `429` | Rate limit exceeded on register, login, or bootstrap |
 | `503` | Admin bootstrap attempted while `ADMIN_SETUP_TOKEN` is not configured |
 
 ---
@@ -352,10 +355,13 @@ A listing looks like this:
       "title": "Spring Boot Hackathon",
       "organization": "DevelopersHub",
       "type": "HACKATHON",
+      "level": "ANY",
       "description": "Build something",
       "url": "https://example.com",
       "deadline": "2026-12-31T23:59:00",
+      "status": "APPROVED",
       "createdAt": "2026-10-28T17:13:26.807",
+      "daysUntilDeadline": 42,
       "tags": [{ "id": 1, "name": "java" }]
     }
   ],
@@ -370,8 +376,9 @@ A listing looks like this:
 
 ## Web frontend
 
-The `frontend/` directory contains a React (Vite) single-page app covering the v0.2 scope:
+The `frontend/` directory contains a React (Vite) single-page app in the Mossline visual language — custom design tokens, fonts, nav, and footer — split into a scroll-driven landing page and the app itself:
 
+- **Landing** (`/`) — the scroll story: hero, vision, solutions, and the station animation, with the opportunity totals (all-time and live right now) pulled from the API and counted up as the section scrolls into view
 - **Browse** — paginated opportunity cards with deadline countdowns (soonest highlighted)
 - **Search and filter** — keyword search across title and organization, type pills, level filter (beginner/intermediate/advanced), and tag filter, all reflected in the URL so views are shareable
 - **Register / login** — JWT stored in `localStorage`, attached to API calls, with automatic refresh when the backend issues refresh tokens
@@ -381,6 +388,20 @@ The `frontend/` directory contains a React (Vite) single-page app covering the v
 - **Review** — admins approve or reject pending submissions from a queue
 - **My submissions** — track the status of everything you have submitted
 - **Show expired** — a toggle that reveals opportunities whose deadline has passed
+
+Routes:
+
+| Route | Page |
+|---|---|
+| `/` | Landing story |
+| `/browse` | Browse and filter opportunities |
+| `/login`, `/register` | Sign in / create an account |
+| `/saved` | Your bookmarked opportunities |
+| `/submit` | Share an opportunity for review |
+| `/review` | Admin review queue (admin only) |
+| `/my-submissions` | Status of everything you submitted |
+
+Anything else redirects to `/browse`. Signed-out visitors who open a guarded page are sent to `/login` (and returned where they were headed after signing in); a non-admin who opens `/review` is sent back to `/browse`.
 
 ### Run it
 
