@@ -50,7 +50,7 @@ jobs:
         run: ./mvnw $MAVEN_ARGS jacoco:report
 
       - name: Upload the unit coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jacoco-unit
           path: backend/target/site/jacoco
@@ -98,7 +98,7 @@ jobs:
 
       - name: Upload the test reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-test-reports
           path: |
@@ -108,7 +108,7 @@ jobs:
 
       - name: Upload the coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jacoco-coverage
           path: backend/target/site/jacoco
@@ -152,7 +152,7 @@ jobs:
 
       - name: Upload the frontend coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-coverage
           path: frontend/coverage
